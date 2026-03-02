@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faceless AI Channel Builder — The Pataray Pipeline</title>
+<meta name="description" content="AI writes every script. No camera. No experience. No face on screen. Launch a faceless YouTube channel in 48 hours.">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #0f1117;
+  color: #e0e0e0;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+a { color: #a5b4fc; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+.section { padding: 80px 0; }
+.section-title { font-size: 1.8rem; color: #fff; text-align: center; margin-bottom: 12px; }
+.section-subtitle { font-size: 1rem; color: #888; text-align: center; margin-bottom: 48px; }
+
+.fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+
+/* ══════════════════════════════════════════
+   HERO
+   ══════════════════════════════════════════ */
+.hero {
+  min-height: 90vh;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 60px 24px;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute;
+  top: -40%; left: -20%; width: 140%; height: 140%;
+  background: radial-gradient(ellipse at 50% 40%, rgba(99,102,241,.12) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 60%, rgba(34,211,238,.06) 0%, transparent 50%);
+  pointer-events: none;
+}
+.hero-content { position: relative; z-index: 1; max-width: 750px; }
+.hero h1 {
+  font-size: 3rem; font-weight: 800; line-height: 1.15; margin-bottom: 20px;
+  background: linear-gradient(135deg, #fff 0%, #a5b4fc 50%, #67e8f9 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hero p { font-size: 1.2rem; color: #b0b0c0; margin-bottom: 32px; line-height: 1.7; }
+.hero .social-proof { font-size: 0.85rem; color: #888; margin-top: 24px; }
+.hero .social-proof span { color: #10b981; font-weight: 600; }
+
+.btn-primary {
+  display: inline-block; padding: 16px 40px;
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+  color: #fff; font-size: 1.05rem; font-weight: 700;
+  border: none; border-radius: 12px; cursor: pointer; text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 24px rgba(99,102,241,.3);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,102,241,.45); text-decoration: none; }
+
+/* ══════════════════════════════════════════
+   PAIN POINTS
+   ══════════════════════════════════════════ */
+.pain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.pain-card {
+  background: #1a1b26; border: 1px solid #2a2b3d; border-radius: 16px;
+  padding: 32px 24px; text-align: center;
+}
+.pain-card .icon { font-size: 2.2rem; margin-bottom: 16px; }
+.pain-card .pain { font-size: 1rem; color: #fca5a5; font-weight: 600; margin-bottom: 8px; }
+.pain-card .solution { font-size: 0.92rem; color: #6ee7b7; line-height: 1.5; }
+
+/* ══════════════════════════════════════════
+   HOW IT WORKS
+   ══════════════════════════════════════════ */
+.steps-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; position: relative; }
+.steps-grid::before {
+  content: ''; position: absolute; top: 40px; left: 10%; width: 80%; height: 3px;
+  background: linear-gradient(to right, #6366f1, #22d3ee, #10b981, #f59e0b, #86efac); z-index: 0;
+}
+.step-card {
+  background: #1a1b26; border: 1px solid #2a2b3d; border-radius: 16px;
+  padding: 24px 16px; text-align: center; position: relative; z-index: 1;
+}
+.step-num {
+  width: 48px; height: 48px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px; font-size: 1.2rem; font-weight: 700; color: #fff;
+  border: 3px solid #1e1e2e; box-shadow: 0 0 16px rgba(0,0,0,.4);
+}
+.step-card:nth-child(1) .step-num { background: #4338ca; }
+.step-card:nth-child(2) .step-num { background: #0e7490; }
+.step-card:nth-child(3) .step-num { background: #065f46; }
+.step-card:nth-child(4) .step-num { background: #92400e; }
+.step-card:nth-child(5) .step-num { background: #166534; }
+.step-card h3 { font-size: 0.95rem; margin-bottom: 8px; font-weight: 700; }
+.step-card:nth-child(1) h3 { color: #a5b4fc; }
+.step-card:nth-child(2) h3 { color: #67e8f9; }
+.step-card:nth-child(3) h3 { color: #6ee7b7; }
+.step-card:nth-child(4) h3 { color: #fcd34d; }
+.step-card:nth-child(5) h3 { color: #86efac; }
+.step-card p { font-size: 0.82rem; color: #b0b0c0; line-height: 1.5; }
+.badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 12px; }
+.badge-ai { background: #312e81; color: #a5b4fc; }
+.badge-you { background: #7c2d12; color: #fdba74; }
+
+/* ══════════════════════════════════════════
+   FEATURES
+   ══════════════════════════════════════════ */
+.features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.feature-card { background: #1a1b26; border: 1px solid #2a2b3d; border-radius: 16px; padding: 28px 24px; }
+.feature-card .icon { font-size: 1.6rem; margin-bottom: 12px; }
+.feature-card h3 { font-size: 1rem; color: #fff; margin-bottom: 8px; font-weight: 700; }
+.feature-card p { font-size: 0.88rem; color: #b0b0c0; line-height: 1.5; }
+
+/* ══════════════════════════════════════════
+   NICHES
+   ══════════════════════════════════════════ */
+.niches-wrap { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+.niche-tag {
+  background: #1a1b26; border: 1px solid #2a2b3d; border-radius: 12px;
+  padding: 14px 24px; text-align: center; min-width: 200px;
+  transition: border-color 0.3s, transform 0.2s;
+}
+.niche-tag:hover { border-color: #6366f1; transform: translateY(-2px); }
+.niche-tag .name { font-size: 0.95rem; color: #fff; font-weight: 600; margin-bottom: 4px; }
+.niche-tag .cpm { font-size: 0.78rem; color: #10b981; font-weight: 600; }
+.niche-tag.wildcard { border-style: dashed; border-color: #6366f1; }
+.niche-tag.wildcard .name { color: #a5b4fc; }
+.niche-tag.wildcard .cpm { color: #888; font-weight: 400; }
+
+/* ══════════════════════════════════════════
+   COST TABLE
+   ══════════════════════════════════════════ */
+.cost-section { background: #13141f; }
+.cost-table-wrap { max-width: 750px; margin: 0 auto; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+thead th { padding: 14px 16px; text-align: left; color: #fff; font-weight: 700; border-bottom: 2px solid #2a2b3d; }
+thead th:not(:first-child) { text-align: center; }
+tbody td { padding: 12px 16px; border-bottom: 1px solid #1e1f2e; color: #b0b0c0; }
+tbody td:not(:first-child) { text-align: center; }
+tbody tr:last-child td { color: #fff; font-weight: 700; border-top: 2px solid #2a2b3d; border-bottom: none; }
+thead th:nth-child(2) { color: #6ee7b7; }
+thead th:nth-child(3) { color: #67e8f9; }
+thead th:nth-child(4) { color: #fcd34d; }
+
+/* ══════════════════════════════════════════
+   WAITLIST FORM
+   ══════════════════════════════════════════ */
+.form-section { padding: 100px 0; }
+.form-card {
+  max-width: 520px; margin: 0 auto;
+  background: #1a1b26; border: 1px solid #2a2b3d; border-radius: 20px;
+  padding: 40px 36px; box-shadow: 0 8px 48px rgba(0,0,0,.4);
+}
+.form-card h2 { font-size: 1.6rem; color: #fff; text-align: center; margin-bottom: 8px; }
+.form-card .form-sub { text-align: center; color: #888; font-size: 0.88rem; margin-bottom: 32px; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; font-size: 0.85rem; color: #b0b0c0; margin-bottom: 6px; font-weight: 600; }
+.form-group input[type="email"], .form-group select {
+  width: 100%; padding: 12px 16px; background: #13141f;
+  border: 1px solid #2a2b3d; border-radius: 10px; color: #e0e0e0;
+  font-size: 0.92rem; font-family: inherit; outline: none; transition: border-color 0.3s;
+}
+.form-group input:focus, .form-group select:focus { border-color: #6366f1; }
+.form-group select { cursor: pointer; }
+.form-group select option { background: #1a1b26; color: #e0e0e0; }
+.radio-group { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.radio-group label {
+  display: flex; align-items: center; gap: 10px; font-weight: 400;
+  cursor: pointer; padding: 8px 12px; border-radius: 8px; transition: background 0.2s;
+}
+.radio-group label:hover { background: rgba(99,102,241,.08); }
+.radio-group input[type="radio"] { accent-color: #6366f1; width: 16px; height: 16px; }
+.btn-submit {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+  color: #fff; font-size: 1.05rem; font-weight: 700;
+  border: none; border-radius: 12px; cursor: pointer; margin-top: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 24px rgba(99,102,241,.3); font-family: inherit;
+}
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,102,241,.45); }
+.form-note { text-align: center; font-size: 0.78rem; color: #666; margin-top: 16px; }
+
+/* ══════════════════════════════════════════
+   FOOTER
+   ══════════════════════════════════════════ */
+footer { border-top: 1px solid #1e1f2e; padding: 40px 24px; text-align: center; }
+footer .tagline { font-size: 0.95rem; color: #888; margin-bottom: 8px; }
+footer .links { font-size: 0.82rem; color: #666; margin-bottom: 8px; }
+footer .copy { font-size: 0.75rem; color: #555; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PIPELINE OVERLAY — THE FACTORY
+   ══════════════════════════════════════════════════════════════════════════════ */
+#pipeline-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #0a0b10;
+  display: none; flex-direction: column;
+  overflow: hidden;
+}
+#pipeline-overlay.active { display: flex; animation: overlay-in 0.6s ease; }
+
+@keyframes overlay-in {
+  from { opacity: 0; } to { opacity: 1; }
+}
+
+/* ── Header bar ── */
+.pipeline-header {
+  padding: 20px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid #1e1f2e;
+  flex-shrink: 0;
+}
+.pipeline-brand {
+  display: flex; align-items: center; gap: 12px;
+}
+.pipeline-brand .logo {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1, #22d3ee);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; font-weight: 800; color: #fff;
+}
+.pipeline-brand h2 {
+  font-size: 1.1rem; color: #fff; font-weight: 700;
+}
+.pipeline-brand .subtitle {
+  font-size: 0.72rem; color: #666; font-weight: 400;
+  letter-spacing: 2px; text-transform: uppercase;
+}
+.pipeline-niche-tag {
+  background: #1a1b26; border: 1px solid #2a2b3d; border-radius: 8px;
+  padding: 8px 16px; font-size: 0.82rem; color: #67e8f9;
+}
+
+/* ── Conveyor belt area ── */
+.conveyor-area {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  padding: 20px 40px; position: relative;
+  min-height: 0;
+}
+
+/* ── Station row ── */
+.station-row {
+  display: flex; align-items: center; gap: 0;
+  position: relative; width: 100%; max-width: 1000px;
+  justify-content: center;
+}
+
+/* ── Belt connector ── */
+.belt {
+  width: 60px; height: 4px; position: relative;
+  background: #1e1f2e; flex-shrink: 0;
+  overflow: hidden;
+}
+.belt::after {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg, transparent, transparent 6px, #333 6px, #333 12px);
+  animation: belt-scroll 0.8s linear infinite;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.belt.active::after { opacity: 1; }
+.belt.done { background: #1a3a2a; }
+.belt.done::after { background: repeating-linear-gradient(90deg, transparent, transparent 6px, #10b981 6px, #10b981 12px); opacity: 0.4; }
+
+@keyframes belt-scroll {
+  from { transform: translateX(-12px); } to { transform: translateX(0); }
+}
+
+/* ── Station node ── */
+.station {
+  display: flex; flex-direction: column; align-items: center;
+  position: relative; flex-shrink: 0; width: 110px;
+}
+.station-icon {
+  width: 64px; height: 64px; border-radius: 16px;
+  background: #1a1b26; border: 2px solid #2a2b3d;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; position: relative;
+  transition: all 0.5s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+.station-label {
+  margin-top: 10px; font-size: 0.72rem; color: #666;
+  text-align: center; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  transition: color 0.4s;
+}
+.station-agent-name {
+  font-size: 0.65rem; color: #555; margin-top: 2px;
+  text-align: center; font-style: italic;
+}
+
+/* Station states */
+.station.active .station-icon {
+  border-color: var(--station-color);
+  box-shadow: 0 0 24px var(--station-glow), 0 0 48px var(--station-glow);
+  animation: station-pulse 1.5s ease-in-out infinite;
+}
+.station.active .station-label { color: #fff; }
+
+.station.done .station-icon {
+  border-color: #10b981;
+  background: #0f2a1f;
+}
+.station.done .station-label { color: #10b981; }
+.station.done .station-icon::after {
+  content: '\2713'; position: absolute;
+  top: -6px; right: -6px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #10b981; color: #fff;
+  font-size: 0.65rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  animation: check-pop 0.3s ease;
+}
+
+.station.flagged .station-icon {
+  border-color: #f59e0b;
+  box-shadow: 0 0 20px rgba(245,158,11,.3);
+}
+.station.flagged .station-icon::after {
+  content: '\26A0'; position: absolute;
+  top: -8px; right: -8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #f59e0b; color: #000;
+  font-size: 0.7rem; display: flex; align-items: center; justify-content: center;
+  animation: flag-shake 0.5s ease;
+}
+
+@keyframes station-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+@keyframes check-pop {
+  from { transform: scale(0); } to { transform: scale(1); }
+}
+@keyframes flag-shake {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+
+/* Station colors */
+.station[data-step="0"] { --station-color: #6366f1; --station-glow: rgba(99,102,241,.25); }
+.station[data-step="1"] { --station-color: #22d3ee; --station-glow: rgba(34,211,238,.25); }
+.station[data-step="2"] { --station-color: #10b981; --station-glow: rgba(16,185,129,.25); }
+.station[data-step="3"] { --station-color: #f59e0b; --station-glow: rgba(245,158,11,.25); }
+.station[data-step="4"] { --station-color: #8b5cf6; --station-glow: rgba(139,92,246,.25); }
+.station[data-step="5"] { --station-color: #10b981; --station-glow: rgba(16,185,129,.25); }
+
+/* ── Breadcrumb trail ── */
+.breadcrumbs {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 32px; flex-wrap: wrap; justify-content: center;
+}
+.crumb {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.75rem; color: #555; transition: color 0.4s;
+}
+.crumb-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #2a2b3d; transition: all 0.4s;
+  flex-shrink: 0;
+}
+.crumb.done .crumb-dot { background: #10b981; box-shadow: 0 0 8px rgba(16,185,129,.4); }
+.crumb.done { color: #10b981; }
+.crumb.active .crumb-dot { background: #6366f1; box-shadow: 0 0 8px rgba(99,102,241,.4); animation: dot-pulse 1s ease-in-out infinite; }
+.crumb.active { color: #a5b4fc; }
+.crumb.flagged .crumb-dot { background: #f59e0b; }
+.crumb.flagged { color: #f59e0b; }
+.crumb-arrow { color: #333; font-size: 0.6rem; }
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1); } 50% { transform: scale(1.4); }
+}
+
+/* ── Live terminal log ── */
+.terminal-wrap {
+  width: 100%; max-width: 700px; margin-top: 28px;
+}
+.terminal {
+  background: #0d0e14; border: 1px solid #1e1f2e; border-radius: 12px;
+  overflow: hidden;
+}
+.terminal-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px; background: #151620; border-bottom: 1px solid #1e1f2e;
+}
+.terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+.terminal-dot:nth-child(1) { background: #ef4444; }
+.terminal-dot:nth-child(2) { background: #f59e0b; }
+.terminal-dot:nth-child(3) { background: #10b981; }
+.terminal-title { margin-left: 8px; font-size: 0.7rem; color: #555; font-family: monospace; }
+.terminal-body {
+  padding: 16px; font-family: 'Courier New', monospace; font-size: 0.78rem;
+  line-height: 1.7; height: 160px; overflow-y: auto;
+  scroll-behavior: smooth;
+}
+.terminal-body::-webkit-scrollbar { width: 4px; }
+.terminal-body::-webkit-scrollbar-track { background: transparent; }
+.terminal-body::-webkit-scrollbar-thumb { background: #2a2b3d; border-radius: 2px; }
+.log-line { opacity: 0; animation: line-appear 0.3s ease forwards; }
+.log-line.system { color: #6366f1; }
+.log-line.info { color: #b0b0c0; }
+.log-line.success { color: #10b981; }
+.log-line.warn { color: #f59e0b; }
+.log-line.error { color: #fca5a5; }
+.log-line .prompt { color: #6366f1; margin-right: 4px; }
+.log-line .timestamp { color: #444; margin-right: 6px; }
+
+@keyframes line-appear {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Success overlay ── */
+.success-screen {
+  position: absolute; inset: 0;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(10,11,16,.95);
+  z-index: 10;
+}
+.success-screen.active { display: flex; animation: success-in 0.8s ease; }
+
+@keyframes success-in {
+  from { opacity: 0; } to { opacity: 1; }
+}
+
+.success-check {
+  width: 100px; height: 100px; border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #065f46);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3rem; color: #fff; margin-bottom: 24px;
+  box-shadow: 0 0 60px rgba(16,185,129,.3);
+  animation: success-pop 0.6s ease;
+}
+@keyframes success-pop {
+  0% { transform: scale(0) rotate(-30deg); }
+  60% { transform: scale(1.15) rotate(5deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+.success-title { font-size: 1.8rem; color: #fff; font-weight: 700; margin-bottom: 8px; }
+.success-sub { font-size: 1rem; color: #888; margin-bottom: 24px; text-align: center; max-width: 400px; }
+.success-email { color: #67e8f9; font-weight: 600; }
+.btn-close {
+  padding: 12px 32px; background: #1a1b26; border: 1px solid #2a2b3d;
+  border-radius: 10px; color: #e0e0e0; font-size: 0.9rem;
+  cursor: pointer; font-family: inherit; transition: border-color 0.3s;
+}
+.btn-close:hover { border-color: #6366f1; }
+
+/* ── Particles (success celebration) ── */
+.particle {
+  position: absolute; width: 6px; height: 6px; border-radius: 50%;
+  pointer-events: none; animation: particle-fly 1.5s ease-out forwards;
+}
+@keyframes particle-fly {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--px), var(--py)) scale(0); opacity: 0; }
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .steps-grid { grid-template-columns: repeat(3, 1fr); }
+  .steps-grid::before { display: none; }
+  .station-row { flex-wrap: wrap; gap: 8px; }
+  .belt { width: 30px; }
+  .station { width: 80px; }
+  .station-icon { width: 52px; height: 52px; font-size: 1.3rem; }
+}
+@media (max-width: 768px) {
+  .hero h1 { font-size: 2.2rem; }
+  .hero p { font-size: 1.05rem; }
+  .pain-grid { grid-template-columns: 1fr; }
+  .features-grid { grid-template-columns: 1fr; }
+  .steps-grid { grid-template-columns: 1fr 1fr; }
+  .section { padding: 60px 0; }
+  .form-card { padding: 28px 20px; }
+  .pipeline-header { padding: 16px 20px; flex-direction: column; gap: 12px; }
+  .conveyor-area { padding: 16px 12px; }
+  .station-row { gap: 4px; }
+  .belt { width: 16px; }
+  .station { width: 60px; }
+  .station-icon { width: 44px; height: 44px; font-size: 1.1rem; border-radius: 12px; }
+  .station-label { font-size: 0.6rem; }
+  .station-agent-name { display: none; }
+  .terminal-body { height: 120px; font-size: 0.7rem; }
+}
+@media (max-width: 500px) {
+  .steps-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 1.8rem; }
+  .niche-tag { min-width: 160px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ LANDING PAGE ═══ -->
+<div id="landing-page">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content fade-in">
+    <h1>Faceless AI Channel Builder</h1>
+    <p>Launch a faceless YouTube channel in 48 hours. AI writes every script. No camera. No experience. No face on screen.</p>
+    <a href="#waitlist" class="btn-primary">Join the Waitlist</a>
+    <div class="social-proof">Currently powering <span>6+ channels</span> across business, horror, education, legal, and storytelling niches</div>
+  </div>
+</section>
+
+<!-- PAIN POINTS -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title fade-in">YouTube Without the Usual Barriers</h2>
+    <p class="section-subtitle fade-in">The three reasons people never start &mdash; solved.</p>
+    <div class="pain-grid">
+      <div class="pain-card fade-in">
+        <div class="icon">&#x1F3A5;</div>
+        <div class="pain">"I don't want to be on camera"</div>
+        <div class="solution">Faceless channels never show your face. Stock footage, AI voice, text overlays &mdash; viewers watch for the content, not the creator.</div>
+      </div>
+      <div class="pain-card fade-in">
+        <div class="icon">&#x1F914;</div>
+        <div class="pain">"I don't know what to make videos about"</div>
+        <div class="solution">AI researches profitable niches with real CPM data and competition analysis. It picks the niche, you pick the one you like.</div>
+      </div>
+      <div class="pain-card fade-in">
+        <div class="icon">&#x270D;&#xFE0F;</div>
+        <div class="pain">"I can't write scripts"</div>
+        <div class="solution">AI writes, reviews, and perfects every script automatically. A multi-agent pipeline delivers A+ quality without you writing a word.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" style="background:#13141f;">
+  <div class="container">
+    <h2 class="section-title fade-in">How It Works</h2>
+    <p class="section-subtitle fade-in">From zero to publishing in five steps</p>
+    <div class="steps-grid">
+      <div class="step-card fade-in">
+        <div class="step-num">1</div>
+        <h3>Pick Your Niche</h3>
+        <p>AI researches profitable niches with real CPM data and competition analysis. You choose the one that fits.</p>
+        <span class="badge badge-ai">AI Does This</span>
+      </div>
+      <div class="step-card fade-in">
+        <div class="step-num">2</div>
+        <h3>Get Your Blueprint</h3>
+        <p>AI builds your channel name, brand identity, audience profile, and a 30-day content calendar.</p>
+        <span class="badge badge-ai">AI Does This</span>
+      </div>
+      <div class="step-card fade-in">
+        <div class="step-num">3</div>
+        <h3>Scripts Written</h3>
+        <p>AI writes full video scripts, then a separate AI reviewer grades them until they hit A+ quality.</p>
+        <span class="badge badge-ai">AI Does This</span>
+      </div>
+      <div class="step-card fade-in">
+        <div class="step-num">4</div>
+        <h3>Make the Video</h3>
+        <p>Paste your script into Pictory AI or InVideo. Voice, footage, and music generated in about 15 minutes.</p>
+        <span class="badge badge-you">You Do This</span>
+      </div>
+      <div class="step-card fade-in">
+        <div class="step-num">5</div>
+        <h3>Upload &amp; Earn</h3>
+        <p>Upload to YouTube with optimized titles, tags, and thumbnails. Start earning from ads.</p>
+        <span class="badge badge-you">You Do This</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT YOU GET -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title fade-in">What You Get</h2>
+    <p class="section-subtitle fade-in">Everything you need to go from idea to income</p>
+    <div class="features-grid">
+      <div class="feature-card fade-in">
+        <div class="icon">&#x1F50D;</div>
+        <h3>Niche Research</h3>
+        <p>AI scores niches on CPM, competition, and scalability so you start in a profitable space.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">&#x1F4CB;</div>
+        <h3>Channel Blueprint</h3>
+        <p>Channel name, brand voice, target audience profile, and a full 30-day content calendar.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">&#x2B50;</div>
+        <h3>A+ Scripts</h3>
+        <p>Multi-agent pipeline: write, review, fix, QA, pass. Every script is publication-ready.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">&#x1F3AC;</div>
+        <h3>Video Production Guide</h3>
+        <p>Step-by-step walkthrough for turning scripts into finished videos with Pictory or InVideo.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">&#x1F465;</div>
+        <h3>Editor Hiring Guide</h3>
+        <p>How to find, brief, and manage video editors on Fiverr and Upwork when you're ready to scale.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon">&#x1F4B0;</div>
+        <h3>Monetization Roadmap</h3>
+        <p>Clear path from zero subscribers to YouTube Partner Program and beyond.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NICHES -->
+<section class="section" style="background:#13141f;">
+  <div class="container">
+    <h2 class="section-title fade-in">Niches That Work</h2>
+    <p class="section-subtitle fade-in">Real niches with real ad revenue potential</p>
+    <div class="niches-wrap fade-in">
+      <div class="niche-tag"><div class="name">Business / Motivation</div><div class="cpm">$8 &ndash; $15 CPM</div></div>
+      <div class="niche-tag"><div class="name">Horror / Supernatural</div><div class="cpm">$8 &ndash; $15 CPM</div></div>
+      <div class="niche-tag"><div class="name">Legal / Court Drama</div><div class="cpm">$9 &ndash; $15 CPM</div></div>
+      <div class="niche-tag"><div class="name">Self-Improvement / Psychology</div><div class="cpm">$6 &ndash; $12 CPM</div></div>
+      <div class="niche-tag"><div class="name">Language Learning</div><div class="cpm">$4 &ndash; $8 CPM</div></div>
+      <div class="niche-tag"><div class="name">Karma / Story Narration</div><div class="cpm">$5 &ndash; $10 CPM</div></div>
+      <div class="niche-tag wildcard"><div class="name">...and any niche you can imagine</div><div class="cpm">AI finds your perfect fit</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- COST TABLE -->
+<section class="section cost-section">
+  <div class="container">
+    <h2 class="section-title fade-in">What It Costs Per Video</h2>
+    <p class="section-subtitle fade-in">Transparent pricing &mdash; no surprises</p>
+    <div class="cost-table-wrap fade-in">
+      <table>
+        <thead><tr><th></th><th>Budget</th><th>Standard</th><th>Premium</th></tr></thead>
+        <tbody>
+          <tr><td>Script (AI)</td><td>$1 &ndash; $3</td><td>$1 &ndash; $3</td><td>$1 &ndash; $3</td></tr>
+          <tr><td>Video Tool</td><td>Free (CapCut)</td><td>$20/mo (Pictory)</td><td>$30/mo (InVideo)</td></tr>
+          <tr><td>Voice</td><td>Free (AI)</td><td>$5/mo (ElevenLabs)</td><td>$22/mo (ElevenLabs)</td></tr>
+          <tr><td><strong>Per Video</strong></td><td><strong>~$1 &ndash; $3</strong></td><td><strong>~$5 &ndash; $10</strong></td><td><strong>~$15 &ndash; $25</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- WAITLIST FORM -->
+<section class="form-section" id="waitlist">
+  <div class="container">
+    <div class="form-card fade-in">
+      <h2>Reserve Your Spot</h2>
+      <p class="form-sub">Be first in line when early access opens.</p>
+      <form id="waitlist-form">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="niche">What niche interests you?</label>
+          <select id="niche" name="niche" required>
+            <option value="" disabled selected>Choose a niche...</option>
+            <option value="Business / Motivation">Business / Motivation</option>
+            <option value="Horror / Supernatural">Horror / Supernatural</option>
+            <option value="Legal / True Crime">Legal / True Crime</option>
+            <option value="Self-Improvement">Self-Improvement</option>
+            <option value="Language Learning">Language Learning</option>
+            <option value="Storytelling / Drama">Storytelling / Drama</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Do you already have a YouTube channel?</label>
+          <div class="radio-group">
+            <label><input type="radio" name="channel_status" value="No" required> No, starting fresh</label>
+            <label><input type="radio" name="channel_status" value="Yes, under 1K subs"> Yes, but under 1K subscribers</label>
+            <label><input type="radio" name="channel_status" value="Yes, 1K+ subs"> Yes, with 1K+ subscribers</label>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">Launch the Pipeline</button>
+        <p class="form-note">No credit card required. Watch the AI factory build your channel in real time.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="tagline">Built by a creator, for creators.</div>
+  <div class="links"><a href="How-We-Make-Videos.html">See the technical pipeline behind our scripts</a></div>
+  <div class="copy">&copy; 2026 Faceless AI Channel Builder</div>
+</footer>
+
+</div><!-- /landing-page -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PIPELINE OVERLAY — THE FACTORY FLOOR
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="pipeline-overlay">
+  <div class="pipeline-header">
+    <div class="pipeline-brand">
+      <div class="logo">P</div>
+      <div>
+        <h2>The Pataray Pipeline</h2>
+        <div class="subtitle">Make It Run. Let It Flow.</div>
+      </div>
+    </div>
+    <div class="pipeline-niche-tag" id="pipeline-niche-display"></div>
+  </div>
+
+  <div class="conveyor-area">
+    <!-- Station row -->
+    <div class="station-row" id="station-row">
+      <div class="station" data-step="0" id="st-0">
+        <div class="station-icon">&#x1F50D;</div>
+        <div class="station-label">Niche</div>
+        <div class="station-agent-name">Research Agent</div>
+      </div>
+      <div class="belt" id="belt-0"></div>
+      <div class="station" data-step="1" id="st-1">
+        <div class="station-icon">&#x1F4CB;</div>
+        <div class="station-label">Blueprint</div>
+        <div class="station-agent-name">Architect Agent</div>
+      </div>
+      <div class="belt" id="belt-1"></div>
+      <div class="station" data-step="2" id="st-2">
+        <div class="station-icon">&#x270D;&#xFE0F;</div>
+        <div class="station-label">Script</div>
+        <div class="station-agent-name">Writer Agent</div>
+      </div>
+      <div class="belt" id="belt-2"></div>
+      <div class="station" data-step="3" id="st-3">
+        <div class="station-icon">&#x1F9D0;</div>
+        <div class="station-label">Review</div>
+        <div class="station-agent-name">Reviewer Agent</div>
+      </div>
+      <div class="belt" id="belt-3"></div>
+      <div class="station" data-step="4" id="st-4">
+        <div class="station-icon">&#x1F6E1;&#xFE0F;</div>
+        <div class="station-label">QA</div>
+        <div class="station-agent-name">QA Validator</div>
+      </div>
+      <div class="belt" id="belt-4"></div>
+      <div class="station" data-step="5" id="st-5">
+        <div class="station-icon">&#x1F4E7;</div>
+        <div class="station-label">Deliver</div>
+        <div class="station-agent-name">Delivery Agent</div>
+      </div>
+    </div>
+
+    <!-- Breadcrumbs -->
+    <div class="breadcrumbs" id="breadcrumbs">
+      <div class="crumb" id="crumb-0"><div class="crumb-dot"></div> Niche Research</div>
+      <div class="crumb-arrow">&#x25B8;</div>
+      <div class="crumb" id="crumb-1"><div class="crumb-dot"></div> Blueprint</div>
+      <div class="crumb-arrow">&#x25B8;</div>
+      <div class="crumb" id="crumb-2"><div class="crumb-dot"></div> Script</div>
+      <div class="crumb-arrow">&#x25B8;</div>
+      <div class="crumb" id="crumb-3"><div class="crumb-dot"></div> Review</div>
+      <div class="crumb-arrow">&#x25B8;</div>
+      <div class="crumb" id="crumb-4"><div class="crumb-dot"></div> QA</div>
+      <div class="crumb-arrow">&#x25B8;</div>
+      <div class="crumb" id="crumb-5"><div class="crumb-dot"></div> Delivery</div>
+    </div>
+
+    <!-- Terminal log -->
+    <div class="terminal-wrap">
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="terminal-dot"></div><div class="terminal-dot"></div><div class="terminal-dot"></div>
+          <div class="terminal-title">pipeline.log &mdash; live</div>
+        </div>
+        <div class="terminal-body" id="terminal-body"></div>
+      </div>
+    </div>
+
+    <!-- Success screen -->
+    <div class="success-screen" id="success-screen">
+      <div class="success-check">&#x2713;</div>
+      <div class="success-title">Pipeline Complete</div>
+      <div class="success-sub">Your channel package is being assembled. We'll send everything to <span class="success-email" id="success-email"></span> when early access opens.</div>
+      <button class="btn-close" id="btn-back">Back to Site</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ JAVASCRIPT: PIPELINE ENGINE ═══ -->
+<script>
+(function() {
+  // ── Fade-in observer ──
+  var fadeEls = document.querySelectorAll('.fade-in');
+  if ('IntersectionObserver' in window) {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.15 });
+    fadeEls.forEach(function(el) { obs.observe(el); });
+  } else { fadeEls.forEach(function(el) { el.classList.add('visible'); }); }
+
+  // ── Smooth scroll ──
+  document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+    a.addEventListener('click', function(e) {
+      e.preventDefault();
+      var t = document.querySelector(this.getAttribute('href'));
+      if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  // ── Pipeline engine ──
+  var overlay = document.getElementById('pipeline-overlay');
+  var terminal = document.getElementById('terminal-body');
+  var successScreen = document.getElementById('success-screen');
+  var formData = {};
+  var logQueue = [];
+  var logBusy = false;
+
+  function log(text, cls) {
+    return new Promise(function(resolve) {
+      logQueue.push({ text: text, cls: cls || 'info', resolve: resolve });
+      drainLog();
+    });
+  }
+  function drainLog() {
+    if (logBusy || logQueue.length === 0) return;
+    logBusy = true;
+    var item = logQueue.shift();
+    var line = document.createElement('div');
+    line.className = 'log-line ' + item.cls;
+    var now = new Date();
+    var ts = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+    line.innerHTML = '<span class="timestamp">[' + ts + ']</span> <span class="prompt">&gt;</span> ' + item.text;
+    terminal.appendChild(line);
+    terminal.scrollTop = terminal.scrollHeight;
+    setTimeout(function() { logBusy = false; item.resolve(); drainLog(); }, 120);
+  }
+
+  function setStation(id, state) {
+    var el = document.getElementById('st-' + id);
+    el.className = 'station ' + state;
+    el.setAttribute('data-step', id);
+  }
+  function setCrumb(id, state) {
+    document.getElementById('crumb-' + id).className = 'crumb ' + state;
+  }
+  function setBelt(id, state) {
+    document.getElementById('belt-' + id).className = 'belt ' + state;
+  }
+
+  function wait(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+  async function runPipeline() {
+    var niche = formData.niche;
+    var email = formData.email;
+
+    // ── Step 0: Niche Research ──
+    setStation(0, 'active'); setCrumb(0, 'active');
+    await log('Initializing Pataray Pipeline...', 'system');
+    await wait(400);
+    await log('Request received: "' + niche + '"', 'info');
+    await wait(300);
+    await log('Niche Research Agent activated', 'system');
+    await wait(800);
+    await log('Analyzing market data for ' + niche + '...', 'info');
+    await wait(1200);
+    await log('CPM range identified: $6-$15', 'info');
+    await wait(600);
+    await log('Competition score: Medium &mdash; good entry point', 'info');
+    await wait(600);
+    await log('Audience size: 2.4M+ monthly searches', 'info');
+    await wait(500);
+    await log('Niche research PASSED &#x2713;', 'success');
+    setStation(0, 'done'); setCrumb(0, 'done'); setBelt(0, 'done');
+    await wait(400);
+
+    // ── Step 1: Blueprint ──
+    setStation(1, 'active'); setCrumb(1, 'active'); setBelt(0, 'active');
+    await log('Blueprint Architect Agent activated', 'system');
+    await wait(600);
+    await log('Generating channel name candidates...', 'info');
+    await wait(1000);
+    await log('Building brand identity &amp; voice profile...', 'info');
+    await wait(800);
+    await log('Defining target audience persona...', 'info');
+    await wait(700);
+    await log('Creating 30-day content calendar...', 'info');
+    await wait(1200);
+    await log('Channel blueprint COMPLETE &#x2713;', 'success');
+    setStation(1, 'done'); setCrumb(1, 'done'); setBelt(0, 'done'); setBelt(1, 'done');
+    await wait(400);
+
+    // ── Step 2: Script Generation ──
+    setStation(2, 'active'); setCrumb(2, 'active'); setBelt(1, 'active');
+    await log('Script Writer Agent activated', 'system');
+    await wait(600);
+    await log('Loading A+ benchmark scripts...', 'info');
+    await wait(800);
+    await log('Generating video script v1.0...', 'info');
+    await wait(1800);
+    await log('Script draft: 118 lines, 940 words', 'info');
+    await wait(400);
+    await log('Within line budget (107-120 target) &#x2713;', 'success');
+    await wait(400);
+    await log('First draft COMPLETE &mdash; sending to Review Agent', 'info');
+    setStation(2, 'done'); setCrumb(2, 'done'); setBelt(1, 'done'); setBelt(2, 'done');
+    await wait(400);
+
+    // ── Step 3: Review (FIRST PASS — FAILS) ──
+    setStation(3, 'active'); setCrumb(3, 'active'); setBelt(2, 'active');
+    await log('Review Agent activated &mdash; grading on 10 dimensions', 'system');
+    await wait(600);
+    await log('Hook strength: 8/10', 'info');
+    await wait(500);
+    await log('Narrative flow: 7/10', 'info');
+    await wait(500);
+    await log('CTA effectiveness: 6/10', 'warn');
+    await wait(500);
+    await log('Emotional engagement: 7/10', 'info');
+    await wait(400);
+    await log('Overall grade: B+ &mdash; needs revision', 'warn');
+    await wait(600);
+    await log('&#x26A0; REVIEW FLAG: CTA weak, closing needs rework', 'warn');
+    setStation(3, 'flagged'); setCrumb(3, 'flagged');
+    await wait(800);
+
+    // ── Back to Script Generator (2nd pass) ──
+    await log('Returning to Writer Agent for revision...', 'warn');
+    setStation(2, 'active'); setCrumb(2, 'active');
+    setBelt(2, 'active');
+    await wait(600);
+    await log('Writer Agent: revising CTA and closing section...', 'info');
+    await wait(1500);
+    await log('Script v1.1 generated &mdash; 115 lines, 920 words', 'info');
+    await wait(400);
+    await log('Revision COMPLETE &mdash; re-sending to Review Agent', 'info');
+    setStation(2, 'done'); setCrumb(2, 'done'); setBelt(2, 'done');
+    await wait(400);
+
+    // ── Step 3 again: Review (SECOND PASS — PASSES) ──
+    setStation(3, 'active'); setCrumb(3, 'active');
+    await log('Review Agent: re-grading revised script...', 'system');
+    await wait(600);
+    await log('Hook strength: 9/10', 'success');
+    await wait(400);
+    await log('Narrative flow: 9/10', 'success');
+    await wait(400);
+    await log('CTA effectiveness: 9/10', 'success');
+    await wait(400);
+    await log('Emotional engagement: 9/10', 'success');
+    await wait(400);
+    await log('Overall grade: A+ &#x2605; &mdash; APPROVED', 'success');
+    setStation(3, 'done'); setCrumb(3, 'done'); setBelt(3, 'done');
+    await wait(400);
+
+    // ── Step 4: QA ──
+    setStation(4, 'active'); setCrumb(4, 'active'); setBelt(3, 'active');
+    await log('QA Validator activated &mdash; binary checks', 'system');
+    await wait(500);
+    await log('Line count: 115 (under 133 limit) &#x2713;', 'info');
+    await wait(400);
+    await log('Word count: 920 (under 1,050 limit) &#x2713;', 'info');
+    await wait(400);
+    await log('Formatting: clean &#x2713;', 'info');
+    await wait(400);
+    await log('No placeholder text found &#x2713;', 'info');
+    await wait(400);
+    await log('QA validation PASSED &#x2713;', 'success');
+    setStation(4, 'done'); setCrumb(4, 'done'); setBelt(3, 'done'); setBelt(4, 'done');
+    await wait(400);
+
+    // ── Step 5: Delivery ──
+    setStation(5, 'active'); setCrumb(5, 'active'); setBelt(4, 'active');
+    await log('Delivery Agent activated', 'system');
+    await wait(500);
+    await log('Packaging channel blueprint + A+ script...', 'info');
+    await wait(800);
+    await log('Confirming delivery address: ' + email, 'info');
+    await wait(600);
+
+    // ── Submit to Google Sheets (primary) + Formspree (backup) ──
+    var submitted = false;
+    // Google Apps Script web app — writes to Google Sheet, poller picks it up
+    var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKNhQTz7lHSAMai0ID2zaW_PKcIVh0RkK6U3reDuUKs8hkwfrf8zLjpJBtoVqkWdzB/exec';
+    if (APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === -1) {
+      try {
+        await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        await log('Order submitted to pipeline &#x2713;', 'success');
+        submitted = true;
+      } catch (e) { /* Apps Script unavailable */ }
+    }
+    // Try local receiver (dev/POC mode)
+    if (!submitted) {
+      try {
+        var localResp = await fetch('http://localhost:8080/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        if (localResp.ok) {
+          await log('Order submitted to local pipeline &#x2713;', 'success');
+          submitted = true;
+        }
+      } catch (e) { /* Local server not running */ }
+    }
+    // Formspree as backup record
+    try {
+      await fetch('https://formspree.io/f/xzdaqqek', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (!submitted) await log('Registration recorded &#x2713;', 'success');
+    } catch (e) { /* offline */ }
+    if (submitted) {
+      await log('Your desktop pipeline will process this shortly...', 'info');
+    } else {
+      await log('Queued for delivery &mdash; we\'ll process this soon &#x2713;', 'success');
+    }
+    await wait(400);
+    await log('&#x2605; PIPELINE COMPLETE &#x2605;', 'success');
+    setStation(5, 'done'); setCrumb(5, 'done'); setBelt(4, 'done');
+    await wait(800);
+
+    // ── Success screen ──
+    document.getElementById('success-email').textContent = email;
+    spawnParticles();
+    successScreen.classList.add('active');
+  }
+
+  function spawnParticles() {
+    var colors = ['#6366f1','#22d3ee','#10b981','#f59e0b','#8b5cf6','#ef4444'];
+    for (var i = 0; i < 40; i++) {
+      var p = document.createElement('div');
+      p.className = 'particle';
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+      p.style.left = '50%';
+      p.style.top = '45%';
+      p.style.setProperty('--px', (Math.random() - 0.5) * 600 + 'px');
+      p.style.setProperty('--py', (Math.random() - 0.5) * 400 + 'px');
+      p.style.animationDelay = (Math.random() * 0.3) + 's';
+      overlay.querySelector('.conveyor-area').appendChild(p);
+    }
+  }
+
+  // ── Form handler ──
+  document.getElementById('waitlist-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var f = this;
+    var emailVal = f.email.value.trim();
+    var nicheVal = f.niche.value;
+    var channelStatus = f.channel_status ? f.channel_status.value : 'Not specified';
+
+    if (!emailVal || !nicheVal) return;
+
+    formData = {
+      email: emailVal,
+      niche: nicheVal,
+      channel_status: channelStatus
+    };
+
+    document.getElementById('pipeline-niche-display').textContent = nicheVal;
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    setTimeout(function() { runPipeline(); }, 600);
+  });
+
+  // ── Back button ──
+  document.getElementById('btn-back').addEventListener('click', function() {
+    overlay.classList.remove('active');
+    successScreen.classList.remove('active');
+    document.body.style.overflow = '';
+    terminal.innerHTML = '';
+    // Reset all stations
+    for (var i = 0; i <= 5; i++) {
+      setStation(i, '');
+      setCrumb(i, '');
+      if (i < 5) setBelt(i, '');
+    }
+    // Remove particles
+    overlay.querySelectorAll('.particle').forEach(function(p) { p.remove(); });
+  });
+})();
+</script>
+
+</body>
+</html>

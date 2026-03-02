@@ -1,0 +1,16 @@
+# SMTP credentials
+poc/config.env
+
+# Customer data
+submissions/pending/*.json
+submissions/processing/
+submissions/completed/
+submissions/failed/*.json
+
+# Logs
+poc/watchdog.log
+poc/processed-rows.txt
+
+# OS
+.DS_Store
+Thumbs.db
