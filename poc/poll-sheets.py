@@ -91,6 +91,7 @@ def create_submission(row):
     channel_status = row.get("channel_status", "")
     request_type = row.get("request_type", "full_channel_build")
     status = row.get("status", "pending")
+    order_id = row.get("order_id", "")
 
     # Only process pending rows
     if status.lower() != "pending":
@@ -109,7 +110,8 @@ def create_submission(row):
         "request_type": request_type,
         "submitted_at": ts,
         "status": "pending",
-        "source": "google_sheets"
+        "source": "google_sheets",
+        "order_id": order_id
     }
 
     with open(filepath, "w") as f:

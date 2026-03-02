@@ -746,15 +746,15 @@ footer .copy { font-size: 0.75rem; color: #555; }
       </div>
       <div class="belt" id="belt-2"></div>
       <div class="station" data-step="3" id="st-3">
-        <div class="station-icon">&#x1F9D0;</div>
-        <div class="station-label">Review</div>
-        <div class="station-agent-name">Reviewer Agent</div>
+        <div class="station-icon">&#x1F3A8;</div>
+        <div class="station-label">Thumbs</div>
+        <div class="station-agent-name">Designer Agent</div>
       </div>
       <div class="belt" id="belt-3"></div>
       <div class="station" data-step="4" id="st-4">
-        <div class="station-icon">&#x1F6E1;&#xFE0F;</div>
-        <div class="station-label">QA</div>
-        <div class="station-agent-name">QA Validator</div>
+        <div class="station-icon">&#x1F4AC;</div>
+        <div class="station-label">Comments</div>
+        <div class="station-agent-name">Engage Agent</div>
       </div>
       <div class="belt" id="belt-4"></div>
       <div class="station" data-step="5" id="st-5">
@@ -772,9 +772,9 @@ footer .copy { font-size: 0.75rem; color: #555; }
       <div class="crumb-arrow">&#x25B8;</div>
       <div class="crumb" id="crumb-2"><div class="crumb-dot"></div> Script</div>
       <div class="crumb-arrow">&#x25B8;</div>
-      <div class="crumb" id="crumb-3"><div class="crumb-dot"></div> Review</div>
+      <div class="crumb" id="crumb-3"><div class="crumb-dot"></div> Thumbs</div>
       <div class="crumb-arrow">&#x25B8;</div>
-      <div class="crumb" id="crumb-4"><div class="crumb-dot"></div> QA</div>
+      <div class="crumb" id="crumb-4"><div class="crumb-dot"></div> Comments</div>
       <div class="crumb-arrow">&#x25B8;</div>
       <div class="crumb" id="crumb-5"><div class="crumb-dot"></div> Delivery</div>
     </div>
@@ -864,157 +864,162 @@ footer .copy { font-size: 0.75rem; color: #555; }
 
   function wait(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
 
-  async function runPipeline() {
-    var niche = formData.niche;
-    var email = formData.email;
+  var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKNhQTz7lHSAMai0ID2zaW_PKcIVh0RkK6U3reDuUKs8hkwfrf8zLjpJBtoVqkWdzB/exec';
+  var pollTimer = null;
+  var currentStep = -1;
+  var idleTimer = null;
 
-    // ── Step 0: Niche Research ──
-    setStation(0, 'active'); setCrumb(0, 'active');
-    await log('Initializing AI Channel Factory...', 'system');
-    await wait(400);
-    await log('Request received: "' + niche + '"', 'info');
-    await wait(300);
-    await log('Niche Research Agent activated', 'system');
-    await wait(800);
-    await log('Analyzing market data for ' + niche + '...', 'info');
-    await wait(1200);
-    await log('CPM range identified: $6-$15', 'info');
-    await wait(600);
-    await log('Competition score: Medium &mdash; good entry point', 'info');
-    await wait(600);
-    await log('Audience size: 2.4M+ monthly searches', 'info');
-    await wait(500);
-    await log('Niche research PASSED &#x2713;', 'success');
-    setStation(0, 'done'); setCrumb(0, 'done'); setBelt(0, 'done');
-    await wait(400);
+  // Backend step → frontend station mapping
+  // Backend: 1=Niche, 2=Blueprint, 3=Scripts, 4=Thumbnails, 5=Comments, 6=GettingStarted, 7=Deliver
+  // Frontend: 0=Niche, 1=Blueprint, 2=Script, 3=Thumbs, 4=Comments, 5=Deliver
+  function backendToStation(step) {
+    if (step <= 1) return 0;
+    if (step === 2) return 1;
+    if (step === 3) return 2;
+    if (step === 4) return 3;
+    if (step === 5 || step === 6) return 4;
+    if (step >= 7) return 5;
+    return 0;
+  }
 
-    // ── Step 1: Blueprint ──
-    setStation(1, 'active'); setCrumb(1, 'active'); setBelt(0, 'active');
-    await log('Blueprint Architect Agent activated', 'system');
-    await wait(600);
-    await log('Generating channel name candidates...', 'info');
-    await wait(1000);
-    await log('Building brand identity &amp; voice profile...', 'info');
-    await wait(800);
-    await log('Defining target audience persona...', 'info');
-    await wait(700);
-    await log('Creating 30-day content calendar...', 'info');
-    await wait(1200);
-    await log('Channel blueprint COMPLETE &#x2713;', 'success');
-    setStation(1, 'done'); setCrumb(1, 'done'); setBelt(0, 'done'); setBelt(1, 'done');
-    await wait(400);
+  // Idle messages shown while waiting between real updates
+  var idleMessages = {
+    0: ['Analyzing market data...', 'Scanning competitor channels...', 'Evaluating CPM ranges...', 'Identifying sub-niches...'],
+    1: ['Generating channel name candidates...', 'Building brand identity...', 'Defining target audience...', 'Creating content calendar...'],
+    2: ['Loading A+ benchmark scripts...', 'Crafting compelling hooks...', 'Writing video narration...', 'Polishing CTA sections...'],
+    3: ['Designing thumbnail concepts...', 'Selecting color palettes...', 'Generating AI image prompts...', 'Optimizing for CTR...'],
+    4: ['Crafting pinned comments...', 'Writing engagement hooks...', 'Building getting started guide...', 'Assembling onboarding steps...'],
+    5: ['Packaging your channel files...', 'Preparing email delivery...', 'Finalizing your order...']
+  };
+  var idleIndex = 0;
 
-    // ── Step 2: Script Generation ──
-    setStation(2, 'active'); setCrumb(2, 'active'); setBelt(1, 'active');
-    await log('Script Writer Agent activated', 'system');
-    await wait(600);
-    await log('Loading A+ benchmark scripts...', 'info');
-    await wait(800);
-    await log('Generating video script v1.0...', 'info');
-    await wait(1800);
-    await log('Script draft: 118 lines, 940 words', 'info');
-    await wait(400);
-    await log('Within line budget (107-120 target) &#x2713;', 'success');
-    await wait(400);
-    await log('First draft COMPLETE &mdash; sending to Review Agent', 'info');
-    setStation(2, 'done'); setCrumb(2, 'done'); setBelt(1, 'done'); setBelt(2, 'done');
-    await wait(400);
+  function showIdleMessage() {
+    var station = backendToStation(currentStep);
+    var msgs = idleMessages[station] || idleMessages[0];
+    var msg = msgs[idleIndex % msgs.length];
+    idleIndex++;
+    log(msg, 'info');
+  }
 
-    // ── Step 3: Review (FIRST PASS — FAILS) ──
-    setStation(3, 'active'); setCrumb(3, 'active'); setBelt(2, 'active');
-    await log('Review Agent activated &mdash; grading on 10 dimensions', 'system');
-    await wait(600);
-    await log('Hook strength: 8/10', 'info');
-    await wait(500);
-    await log('Narrative flow: 7/10', 'info');
-    await wait(500);
-    await log('CTA effectiveness: 6/10', 'warn');
-    await wait(500);
-    await log('Emotional engagement: 7/10', 'info');
-    await wait(400);
-    await log('Overall grade: B+ &mdash; needs revision', 'warn');
-    await wait(600);
-    await log('&#x26A0; REVIEW FLAG: CTA weak, closing needs rework', 'warn');
-    setStation(3, 'flagged'); setCrumb(3, 'flagged');
-    await wait(800);
+  function startIdleMessages() {
+    stopIdleMessages();
+    idleIndex = 0;
+    // Show first idle message after 8s, then every 12s
+    idleTimer = setTimeout(function tick() {
+      showIdleMessage();
+      idleTimer = setTimeout(tick, 12000);
+    }, 8000);
+  }
 
-    // ── Back to Script Generator (2nd pass) ──
-    await log('Returning to Writer Agent for revision...', 'warn');
-    setStation(2, 'active'); setCrumb(2, 'active');
-    setBelt(2, 'active');
-    await wait(600);
-    await log('Writer Agent: revising CTA and closing section...', 'info');
-    await wait(1500);
-    await log('Script v1.1 generated &mdash; 115 lines, 920 words', 'info');
-    await wait(400);
-    await log('Revision COMPLETE &mdash; re-sending to Review Agent', 'info');
-    setStation(2, 'done'); setCrumb(2, 'done'); setBelt(2, 'done');
-    await wait(400);
+  function stopIdleMessages() {
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+  }
 
-    // ── Step 3 again: Review (SECOND PASS — PASSES) ──
-    setStation(3, 'active'); setCrumb(3, 'active');
-    await log('Review Agent: re-grading revised script...', 'system');
-    await wait(600);
-    await log('Hook strength: 9/10', 'success');
-    await wait(400);
-    await log('Narrative flow: 9/10', 'success');
-    await wait(400);
-    await log('CTA effectiveness: 9/10', 'success');
-    await wait(400);
-    await log('Emotional engagement: 9/10', 'success');
-    await wait(400);
-    await log('Overall grade: A+ &#x2605; &mdash; APPROVED', 'success');
-    setStation(3, 'done'); setCrumb(3, 'done'); setBelt(3, 'done');
-    await wait(400);
+  function advanceToStep(backendStep, message) {
+    var station = backendToStation(backendStep);
 
-    // ── Step 4: QA ──
-    setStation(4, 'active'); setCrumb(4, 'active'); setBelt(3, 'active');
-    await log('QA Validator activated &mdash; binary checks', 'system');
-    await wait(500);
-    await log('Line count: 115 (under 133 limit) &#x2713;', 'info');
-    await wait(400);
-    await log('Word count: 920 (under 1,050 limit) &#x2713;', 'info');
-    await wait(400);
-    await log('Formatting: clean &#x2713;', 'info');
-    await wait(400);
-    await log('No placeholder text found &#x2713;', 'info');
-    await wait(400);
-    await log('QA validation PASSED &#x2713;', 'success');
-    setStation(4, 'done'); setCrumb(4, 'done'); setBelt(3, 'done'); setBelt(4, 'done');
-    await wait(400);
-
-    // ── Step 5: Delivery ──
-    setStation(5, 'active'); setCrumb(5, 'active'); setBelt(4, 'active');
-    await log('Delivery Agent activated', 'system');
-    await wait(500);
-    await log('Packaging channel blueprint + A+ script...', 'info');
-    await wait(800);
-    await log('Confirming delivery address: ' + email, 'info');
-    await wait(600);
-
-    // ── Submit to Google Sheets via Apps Script ──
-    var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKNhQTz7lHSAMai0ID2zaW_PKcIVh0RkK6U3reDuUKs8hkwfrf8zLjpJBtoVqkWdzB/exec';
-    try {
-      await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      await log('Order submitted to pipeline &#x2713;', 'success');
-      await log('Your channel package will be delivered to ' + email, 'info');
-    } catch (e) {
-      await log('Submission queued &mdash; we\'ll process this soon &#x2713;', 'success');
+    // Mark all previous stations as done
+    for (var i = 0; i < station; i++) {
+      setStation(i, 'done');
+      setCrumb(i, 'done');
+      if (i < 5) setBelt(i, 'done');
     }
-    await wait(400);
-    await log('&#x2605; PIPELINE COMPLETE &#x2605;', 'success');
-    setStation(5, 'done'); setCrumb(5, 'done'); setBelt(4, 'done');
-    await wait(800);
 
-    // ── Success screen ──
-    document.getElementById('success-email').textContent = email;
-    spawnParticles();
-    successScreen.classList.add('active');
+    // Set current station to active
+    setStation(station, 'active');
+    setCrumb(station, 'active');
+    if (station > 0) setBelt(station - 1, 'active');
+
+    // Log real message from backend
+    if (message) {
+      log(message, 'system');
+    }
+
+    // Reset idle messages for new step
+    currentStep = backendStep;
+    startIdleMessages();
+  }
+
+  function startStatusPolling(orderId) {
+    var email = formData.email;
+    var niche = formData.niche;
+
+    // Initial animation
+    log('Initializing AI Channel Factory...', 'system');
+    log('Request received: "' + niche + '"', 'info');
+    log('Order ID: ' + orderId, 'info');
+    log('Waiting for pipeline to start...', 'info');
+    setStation(0, 'active'); setCrumb(0, 'active');
+    currentStep = 0;
+    startIdleMessages();
+
+    pollTimer = setInterval(function() {
+      var url = APPS_SCRIPT_URL + '?action=status&order_id=' + encodeURIComponent(orderId) + '&t=' + Date.now();
+      fetch(url)
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+          if (!data.ok && !data.status) return;
+
+          var step = data.pipeline_step || 0;
+          var msg = data.pipeline_message || '';
+          var status = data.status || 'pending';
+
+          // Only advance if step changed
+          if (step > currentStep || (step === currentStep && msg && msg !== lastMessage)) {
+            advanceToStep(step, msg);
+            lastMessage = msg;
+          }
+
+          // Pipeline complete
+          if (status === 'complete') {
+            stopPolling();
+            stopIdleMessages();
+            log('&#x2605; PIPELINE COMPLETE &#x2605;', 'success');
+            log('Your channel package has been sent to ' + email, 'success');
+            // Mark all stations done
+            for (var i = 0; i <= 5; i++) {
+              setStation(i, 'done'); setCrumb(i, 'done');
+              if (i < 5) setBelt(i, 'done');
+            }
+            setTimeout(function() {
+              document.getElementById('success-email').textContent = email;
+              spawnParticles();
+              successScreen.classList.add('active');
+            }, 1500);
+          }
+
+          // Pipeline failed
+          if (status === 'failed') {
+            stopPolling();
+            stopIdleMessages();
+            log('Pipeline encountered an issue &mdash; our team is on it', 'warn');
+            log('You\'ll receive an email at ' + email + ' once resolved', 'info');
+            setTimeout(function() {
+              document.getElementById('success-email').textContent = email;
+              document.querySelector('.success-title').textContent = 'We\'re On It';
+              document.querySelector('.success-sub').innerHTML = 'Our pipeline hit a snag, but don\'t worry &mdash; we\'ll get your channel package to <span class="success-email">' + email + '</span> as soon as it\'s ready.';
+              document.querySelector('.success-check').innerHTML = '&#x1F527;';
+              successScreen.classList.add('active');
+            }, 2000);
+          }
+        })
+        .catch(function() {
+          // Silently ignore fetch errors — will retry next interval
+        });
+    }, 5000);
+  }
+
+  var lastMessage = '';
+
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    stopIdleMessages();
+  }
+
+  function generateOrderId() {
+    var ts = Math.floor(Date.now() / 1000);
+    var rand = Math.random().toString(36).substring(2, 6);
+    return 'ORD-' + ts + '-' + rand;
   }
 
   function spawnParticles() {
@@ -1042,25 +1047,44 @@ footer .copy { font-size: 0.75rem; color: #555; }
 
     if (!emailVal || !nicheVal) return;
 
+    var orderId = generateOrderId();
+
     formData = {
       email: emailVal,
       niche: nicheVal,
-      channel_status: channelStatus
+      channel_status: channelStatus,
+      order_id: orderId
     };
 
     document.getElementById('pipeline-niche-display').textContent = nicheVal;
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    setTimeout(function() { runPipeline(); }, 600);
+    // Submit to Google Sheets (no-cors — opaque response)
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    }).catch(function() {});
+
+    // Start real-time status polling
+    setTimeout(function() { startStatusPolling(orderId); }, 600);
   });
 
   // ── Back button ──
   document.getElementById('btn-back').addEventListener('click', function() {
+    stopPolling();
     overlay.classList.remove('active');
     successScreen.classList.remove('active');
     document.body.style.overflow = '';
     terminal.innerHTML = '';
+    currentStep = -1;
+    lastMessage = '';
+    // Reset success screen text in case it was changed by failure
+    document.querySelector('.success-title').textContent = 'Pipeline Complete';
+    document.querySelector('.success-sub').innerHTML = 'Your channel package is being assembled. We\'ll send everything to <span class="success-email" id="success-email"></span> when early access opens.';
+    document.querySelector('.success-check').innerHTML = '&#x2713;';
     // Reset all stations
     for (var i = 0; i <= 5; i++) {
       setStation(i, '');

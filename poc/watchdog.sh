@@ -24,6 +24,9 @@ LOGFILE="$PROJECT_ROOT/poc/watchdog.log"
 
 POLL_INTERVAL=30  # seconds
 
+# ── Apps Script URL for status updates ──
+APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbyKNhQTz7lHSAMai0ID2zaW_PKcIVh0RkK6U3reDuUKs8hkwfrf8zLjpJBtoVqkWdzB/exec"
+
 # ── Load Gmail creds from crontab env (same vars) ──
 export GMAIL_USER="${GMAIL_USER:-spataray@gmail.com}"
 export GMAIL_APP_PASSWORD="${GMAIL_APP_PASSWORD:-$(crontab -l 2>/dev/null | grep GMAIL_APP_PASSWORD | head -1 | cut -d= -f2)}"
@@ -35,6 +38,15 @@ log() {
     local msg="[$(date '+%Y-%m-%d %H:%M:%S')] $1"
     echo "$msg"
     echo "$msg" >> "$LOGFILE"
+}
+
+update_status() {
+    local oid="$1" step="$2" msg="$3" status="${4:-processing}"
+    [ -z "$oid" ] && return 0
+    curl -s -L -X POST "$APPS_SCRIPT_URL" \
+        -H "Content-Type: application/json" \
+        -d "{\"action\":\"update_status\",\"order_id\":\"$oid\",\"pipeline_step\":$step,\"pipeline_message\":\"$msg\",\"status\":\"$status\"}" \
+        > /dev/null 2>&1 &
 }
 
 log "═══ Faceless AI Watchdog started ═══"
@@ -62,10 +74,12 @@ while true; do
         email=$(python3 -c "import json; d=json.load(open('$submission')); print(d.get('email',''))")
         niche=$(python3 -c "import json; d=json.load(open('$submission')); print(d.get('niche',''))")
         request_type=$(python3 -c "import json; d=json.load(open('$submission')); print(d.get('request_type','full_channel_build'))")
+        order_id=$(python3 -c "import json; d=json.load(open('$submission')); print(d.get('order_id',''))")
 
         log "  Email: $email"
         log "  Niche: $niche"
         log "  Type:  $request_type"
+        log "  Order: $order_id"
 
         # Move to processing
         mv "$submission" "$PROCESSING/$filename"
@@ -82,6 +96,7 @@ while true; do
         case "$request_type" in
             niche_research)
                 log "  Pipeline: Niche Research only"
+                update_status "$order_id" 1 "Researching your niche..."
                 claude --model sonnet -p "
 You are the Niche Research Agent for the Faceless AI Channel Builder.
 
@@ -111,6 +126,7 @@ Format as a clean, readable report.
 
                 # Step 1/6: Niche Research
                 log "  Step 1/6: Niche Research..."
+                update_status "$order_id" 1 "Researching your niche..."
                 claude --model sonnet -p "
 You are the Niche Research Agent. Research the niche \"$niche\" for a faceless YouTube channel.
 
@@ -133,9 +149,11 @@ Write the report to: $output_dir/01-niche-research.html
 
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 1 DONE"
+                    update_status "$order_id" 1 "Niche Research complete"
 
                     # Step 2/6: Channel Blueprint
                     log "  Step 2/6: Channel Blueprint..."
+                    update_status "$order_id" 2 "Building channel blueprint..."
                     claude --model sonnet -p "
 You are the Blueprint Architect Agent. Based on the niche research in $output_dir/01-niche-research.html, create a full channel blueprint.
 
@@ -157,9 +175,11 @@ Write the blueprint to: $output_dir/02-channel-blueprint.html
 
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 2 DONE"
+                    update_status "$order_id" 2 "Channel Blueprint complete"
 
                     # Step 3/6: Generate 3 sample scripts
                     log "  Step 3/6: Generating 3 sample scripts..."
+                    update_status "$order_id" 3 "Writing video scripts..."
                     claude --model sonnet -p "
 You are the Script Writer Agent. Based on the channel blueprint in $output_dir/02-channel-blueprint.html, write 3 complete video scripts.
 
@@ -180,9 +200,11 @@ Write each script to a separate file:
 
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 3 DONE"
+                    update_status "$order_id" 3 "Scripts complete"
 
                     # Step 4/6: Thumbnail Guide
                     log "  Step 4/6: Generating thumbnail guide..."
+                    update_status "$order_id" 4 "Designing thumbnails..."
                     claude --model sonnet -p "
 You are the Thumbnail Designer Agent. Read all 3 scripts in $output_dir (03-script-v01.txt, 03-script-v02.txt, 03-script-v03.txt) and the channel blueprint in $output_dir/02-channel-blueprint.html.
 
@@ -207,9 +229,11 @@ Write the complete guide to: $output_dir/04-thumbnail-guide.html
 
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 4 DONE"
+                    update_status "$order_id" 4 "Thumbnails complete"
 
                     # Step 5/6: Pinned Comments
                     log "  Step 5/6: Generating pinned comments..."
+                    update_status "$order_id" 5 "Crafting engagement comments..."
                     claude --model sonnet -p "
 You are the Engagement Agent. Read all 3 scripts in $output_dir (03-script-v01.txt, 03-script-v02.txt, 03-script-v03.txt).
 
@@ -231,9 +255,11 @@ Write the complete file to: $output_dir/05-pinned-comments.html
 
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 5 DONE"
+                    update_status "$order_id" 5 "Comments complete"
 
                     # Step 6/6: Getting Started Guide
                     log "  Step 6/6: Generating getting started guide..."
+                    update_status "$order_id" 6 "Building your getting started guide..."
                     claude --model sonnet -p "
 You are the Onboarding Guide Agent. Read all the files in $output_dir to understand what was delivered to this customer.
 
@@ -281,6 +307,7 @@ Write the guide to: $output_dir/00-getting-started.html
 
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 6 DONE"
+                    update_status "$order_id" 6 "Getting Started guide complete"
                 fi
                 ;;
 
@@ -315,6 +342,7 @@ Write each to:
 
             # Send email with results
             log "  Sending results to $email..."
+            update_status "$order_id" 7 "Packaging and sending email..."
             python3 "$SCRIPT_DIR/send-email.py" \
                 --to "$email" \
                 --niche "$niche" \
@@ -323,6 +351,7 @@ Write each to:
 
             if [ "$email_ok" = true ]; then
                 log "  Email SENT to $email"
+                update_status "$order_id" 7 "Email sent!" "complete"
                 # Move everything to completed
                 mv "$PROCESSING/$filename" "$COMPLETED/$filename"
                 mv "$output_dir" "$COMPLETED/${order_id}_output"
@@ -330,9 +359,11 @@ Write each to:
             else
                 log "  WARNING: Email failed, output saved in processing/"
                 log "  Manual action needed: send files from $output_dir to $email"
+                update_status "$order_id" 7 "Email delivery issue — we will retry" "complete"
             fi
         else
             log "  Pipeline FAILED"
+            update_status "$order_id" 0 "Error encountered" "failed"
             mv "$PROCESSING/$filename" "$FAILED/$filename"
             [ -d "$output_dir" ] && mv "$output_dir" "$FAILED/${order_id}_output"
             log "  Status: FAILED (moved to failed/)"
