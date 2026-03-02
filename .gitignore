@@ -4,12 +4,17 @@ poc/config.env
 # Customer data
 submissions/pending/*.json
 submissions/processing/
-submissions/completed/
+submissions/completed/*.json
+submissions/completed/*_output/
 submissions/failed/*.json
+submissions/failed/*_output/
 
-# Logs
+# Runtime files
 poc/watchdog.log
+poc/poller.log
 poc/processed-rows.txt
+poc/watchdog.pid
+poc/poller.pid
 
 # OS
 .DS_Store

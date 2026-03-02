@@ -113,7 +113,7 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     os.makedirs(PENDING, exist_ok=True)
     server = HTTPServer(("0.0.0.0", PORT), Handler)
-    print(f"=== Pataray POC Receiver ===")
+    print(f"=== Faceless AI POC Receiver ===")
     print(f"Serving on http://localhost:{PORT}")
     print(f"Landing page: http://localhost:{PORT}/")
     print(f"Submissions go to: {PENDING}")

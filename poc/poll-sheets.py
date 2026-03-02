@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Pataray Pipeline — Google Sheets Poller
+Faceless AI Channel Builder — Google Sheets Poller
 
 Polls a published Google Sheet CSV for new submissions and drops
 JSON files into submissions/pending/ for the watchdog to process.
@@ -65,7 +65,7 @@ def fetch_sheet():
         print("Publish your Google Sheet as CSV and paste the URL.")
         sys.exit(1)
 
-    req = urllib.request.Request(SHEET_CSV_URL, headers={"User-Agent": "PatarayPoller/1.0"})
+    req = urllib.request.Request(SHEET_CSV_URL, headers={"User-Agent": "Faceless AIPoller/1.0"})
     with urllib.request.urlopen(req, timeout=15) as resp:
         text = resp.read().decode("utf-8")
 
@@ -152,7 +152,7 @@ def main():
             except ValueError:
                 pass
 
-    print("═══ Pataray Sheets Poller ═══")
+    print("═══ Faceless AI Sheets Poller ═══")
     print(f"Sheet: {SHEET_CSV_URL[:60]}...")
     print(f"Pending dir: {PENDING_DIR}")
     if loop:

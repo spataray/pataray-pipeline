@@ -1,6 +1,6 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════
-# Pataray Pipeline Watchdog
+# Faceless AI Channel Builder Watchdog
 # Monitors submissions/pending/ for new orders and
 # triggers the pipeline for each one.
 #
@@ -37,7 +37,7 @@ log() {
     echo "$msg" >> "$LOGFILE"
 }
 
-log "═══ Pataray Watchdog started ═══"
+log "═══ Faceless AI Watchdog started ═══"
 log "Monitoring: $PENDING"
 log "Poll interval: ${POLL_INTERVAL}s"
 log ""
@@ -83,7 +83,7 @@ while true; do
             niche_research)
                 log "  Pipeline: Niche Research only"
                 claude --model sonnet -p "
-You are the Niche Research Agent for the Pataray Pipeline.
+You are the Niche Research Agent for the Faceless AI Channel Builder.
 
 Research the following niche for a faceless YouTube channel: \"$niche\"
 
@@ -104,23 +104,40 @@ Format as a clean, readable report.
                 ;;
 
             full_channel_build)
-                log "  Pipeline: Full Channel Build (niche + blueprint + scripts + thumbnails + comments)"
+                log "  Pipeline: Full Channel Build (6 steps)"
 
-                # Step 1: Niche Research
-                log "  Step 1/5: Niche Research..."
+                # Shared HTML styling instructions for all HTML deliverables
+                HTML_STYLE="Write the output as a complete, self-contained HTML file with professional dark theme styling. Use a <style> tag with these CSS rules: body { background:#0f1117; color:#e0e0e0; font-family:Segoe UI,Tahoma,sans-serif; padding:40px; line-height:1.7; margin:0; } h1 { color:#fff; border-bottom:2px solid #6366f1; padding-bottom:12px; } h2 { color:#22d3ee; margin-top:32px; } h3 { color:#67e8f9; } p,li { color:#b0b0c0; } .card { background:#1a1b26; border:1px solid #2a2b3d; border-radius:12px; padding:20px; margin:16px 0; } table { width:100%; border-collapse:collapse; margin:16px 0; } th { background:#1a1b26; color:#fff; padding:12px; text-align:left; border-bottom:2px solid #6366f1; } td { padding:10px 12px; border-bottom:1px solid #2a2b3d; color:#b0b0c0; } a { color:#22d3ee; } .highlight { color:#10b981; font-weight:bold; } Wrap all content in a centered div (max-width:800px; margin:0 auto). End with a footer div: Faceless AI Channel Builder. Make it polished and modern."
+
+                # Step 1/6: Niche Research
+                log "  Step 1/6: Niche Research..."
                 claude --model sonnet -p "
 You are the Niche Research Agent. Research the niche \"$niche\" for a faceless YouTube channel.
-Provide: viability score, CPM range, competition level, top 5 sub-niches, 10 video title ideas.
-Write the report to: $output_dir/01-niche-research.txt
+
+Provide a comprehensive analysis including:
+1. Niche viability score (1-10) with reasoning
+2. Estimated CPM range with data sources
+3. Competition level (Low/Medium/High) and top competitor channels
+4. Monthly search volume estimate
+5. Top 5 sub-niches within this space
+6. Content format recommendations (list, story, tutorial, etc.)
+7. Monetization potential beyond ads
+8. 10 video title ideas to start with
+9. Recommended posting frequency
+10. Growth timeline estimate (months to 1K subs)
+
+$HTML_STYLE
+
+Write the report to: $output_dir/01-niche-research.html
 " --allowedTools "WebSearch,WebFetch,Read,Write" > /dev/null 2>&1 || pipeline_ok=false
 
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 1 DONE"
 
-                    # Step 2: Channel Blueprint
-                    log "  Step 2/5: Channel Blueprint..."
+                    # Step 2/6: Channel Blueprint
+                    log "  Step 2/6: Channel Blueprint..."
                     claude --model sonnet -p "
-You are the Blueprint Architect Agent. Based on the niche research in $output_dir/01-niche-research.txt, create a full channel blueprint.
+You are the Blueprint Architect Agent. Based on the niche research in $output_dir/01-niche-research.html, create a full channel blueprint.
 
 Include:
 1. Three channel name options (with reasoning)
@@ -132,17 +149,19 @@ Include:
 7. Channel description and about section copy
 8. Initial tags and keywords
 
-Write the blueprint to: $output_dir/02-channel-blueprint.txt
+$HTML_STYLE
+
+Write the blueprint to: $output_dir/02-channel-blueprint.html
 " --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
                 fi
 
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 2 DONE"
 
-                    # Step 3: Generate 3 sample scripts
-                    log "  Step 3/5: Generating 3 sample scripts..."
+                    # Step 3/6: Generate 3 sample scripts
+                    log "  Step 3/6: Generating 3 sample scripts..."
                     claude --model sonnet -p "
-You are the Script Writer Agent. Based on the channel blueprint in $output_dir/02-channel-blueprint.txt, write 3 complete video scripts.
+You are the Script Writer Agent. Based on the channel blueprint in $output_dir/02-channel-blueprint.html, write 3 complete video scripts.
 
 Rules:
 - Each script must be 107-120 narration lines (HARD LIMIT: 133 lines)
@@ -162,112 +181,106 @@ Write each script to a separate file:
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 3 DONE"
 
-                    # Step 4: Thumbnail Guide
-                    log "  Step 4/5: Generating thumbnail guides..."
+                    # Step 4/6: Thumbnail Guide
+                    log "  Step 4/6: Generating thumbnail guide..."
                     claude --model sonnet -p "
-You are the Thumbnail Designer Agent. Read all 3 scripts in $output_dir (03-script-v01.txt, 03-script-v02.txt, 03-script-v03.txt) and the channel blueprint in $output_dir/02-channel-blueprint.txt.
+You are the Thumbnail Designer Agent. Read all 3 scripts in $output_dir (03-script-v01.txt, 03-script-v02.txt, 03-script-v03.txt) and the channel blueprint in $output_dir/02-channel-blueprint.html.
 
-For EACH of the 3 scripts, create a detailed thumbnail design brief including:
+For EACH of the 3 scripts, create a detailed thumbnail design section with:
+1. Thumbnail Concept — What the thumbnail should show
+2. Text Overlay — Bold text for the thumbnail (max 5 words)
+3. Color Scheme — 2-3 dominant colors that pop
+4. Background Style — Gradient, photo, dark/moody, bright, split-screen, etc.
+5. AI Image Prompt — A ready-to-paste prompt for Ideogram, Canva AI, or Leonardo AI
 
-1. **Thumbnail Concept** — What the thumbnail should show (main image, emotion, scene)
-2. **Text Overlay** — Bold text to put on the thumbnail (max 5 words, large readable font)
-3. **Color Scheme** — 2-3 dominant colors that pop and match the channel brand
-4. **Facial Expression / Emotion** — If using a face, what expression (shock, curiosity, fear, etc.)
-5. **Background Style** — Gradient, photo, dark/moody, bright, split-screen, etc.
-6. **AI Image Prompt** — A ready-to-paste prompt for generating the thumbnail background image (works with Ideogram, Canva AI, or Leonardo AI)
+After the 3 thumbnail briefs, include a HOW-TO section covering:
+- Free platforms: Canva (canva.com) with YouTube Thumbnail 1280x720 template, Adobe Express, Snappa
+- AI image generation: Ideogram (ideogram.ai), Leonardo AI (leonardo.ai), Canva AI
+- Step-by-step: generate background image, open Canva, upload, add text overlay (bold contrasting font), add elements, download as PNG, upload as thumbnail
+- Thumbnail rules for high CTR: faces with emotion get 30% more clicks, max 5 words, contrasting colors, one focal point, test at small size
 
-After the 3 thumbnail briefs, include a HOW-TO GUIDE section:
+$HTML_STYLE
 
-## How to Create Your Thumbnails
-
-### Free Platforms (Recommended)
-- **Canva** (canva.com) — Best for beginners. Use 'YouTube Thumbnail' template (1280x720). Drag and drop text, images, elements. Free tier is enough.
-- **Adobe Express** (adobe.com/express) — Similar to Canva, good free templates.
-- **Snappa** (snappa.com) — Quick thumbnail maker with YouTube-specific templates.
-
-### AI Image Generation (For Backgrounds)
-- **Ideogram** (ideogram.ai) — Free, great for text-on-image. Paste the AI prompt from above.
-- **Leonardo AI** (leonardo.ai) — Free tier, 150 images/day. Good for cinematic backgrounds.
-- **Canva AI** — Built into Canva. Click 'Apps' > 'Text to Image' and paste the prompt.
-
-### Step-by-Step Process
-1. Generate the background image using the AI prompt provided
-2. Open Canva and create a 1280x720 design
-3. Upload the AI background image
-4. Add the text overlay (use bold, contrasting font — white with black outline works best)
-5. Add any extra elements (arrows, circles, emoji)
-6. Download as PNG
-7. Upload as your YouTube thumbnail
-
-### Thumbnail Rules for High CTR
-- Faces with strong emotions get 30% more clicks
-- Max 5 words of text — viewers scan in 1 second
-- Use contrasting colors (yellow on dark, white on red)
-- Avoid clutter — one clear focal point
-- Test at small size (it must be readable as a tiny image in search results)
-
-Write the complete guide to: $output_dir/04-thumbnail-guide.txt
+Write the complete guide to: $output_dir/04-thumbnail-guide.html
 " --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
                 fi
 
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 4 DONE"
 
-                    # Step 5: Pinned Comments
-                    log "  Step 5/5: Generating pinned comments..."
+                    # Step 5/6: Pinned Comments
+                    log "  Step 5/6: Generating pinned comments..."
                     claude --model sonnet -p "
 You are the Engagement Agent. Read all 3 scripts in $output_dir (03-script-v01.txt, 03-script-v02.txt, 03-script-v03.txt).
 
-For EACH script, write a pinned comment that the channel owner will paste as the first comment on their YouTube video.
+For EACH script, create a pinned comment section with:
+- The video title from the script
+- A ready-to-paste pinned comment (3-5 lines, conversational, 1-2 emoji, includes a question to encourage replies and a soft CTA for likes/subscribes)
 
-Each pinned comment should:
-1. Start with a hook or question related to the video topic
-2. Encourage viewers to reply (ask a specific question they can answer)
-3. Include a soft CTA (like, subscribe, check the description)
-4. Be 3-5 lines max — short enough to read without clicking 'show more'
-5. Feel conversational, not salesy
-6. Use 1-2 relevant emoji naturally (not overdone)
+Make each comment feel natural and engaging, not salesy. The viewer should want to reply.
 
-Format the file clearly:
+After the 3 pinned comments, include:
+- How to Pin a Comment on YouTube (step-by-step: publish video, post comment, click three dots, select Pin)
+- Why Pinned Comments Matter (boosts engagement as algorithm signal, directs conversation, increases watch time, builds community)
 
----
-VIDEO 1: [Title from script]
-PINNED COMMENT:
-[The comment text, ready to copy-paste directly into YouTube]
+$HTML_STYLE
 
----
-VIDEO 2: [Title from script]
-PINNED COMMENT:
-[The comment text]
-
----
-VIDEO 3: [Title from script]
-PINNED COMMENT:
-[The comment text]
----
-
-After the 3 pinned comments, include a short HOW-TO section:
-
-## How to Pin a Comment on YouTube
-1. Upload your video to YouTube
-2. Once published, go to your video and scroll to comments
-3. Post the pinned comment text (copy-paste from above)
-4. Click the three dots (...) on your comment
-5. Select 'Pin'
-6. Your comment will now appear at the top for all viewers
-
-## Why Pinned Comments Matter
-- They boost engagement (comments = algorithm signal)
-- They direct conversation (you control the first impression)
-- They increase watch time (viewers who comment tend to watch longer)
-- They build community (people reply to pinned comments more than regular ones)
-
-Write the complete file to: $output_dir/05-pinned-comments.txt
+Write the complete file to: $output_dir/05-pinned-comments.html
 " --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
                 fi
 
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 5 DONE"
+
+                    # Step 6/6: Getting Started Guide
+                    log "  Step 6/6: Generating getting started guide..."
+                    claude --model sonnet -p "
+You are the Onboarding Guide Agent. Read all the files in $output_dir to understand what was delivered to this customer.
+
+Create a comprehensive Getting Started guide for a complete beginner. Structure it as:
+
+1. Welcome and What You Received
+   - List every file in the package with a one-line description
+   - Recommended order to read and use them
+
+2. Your First Video in 30 Minutes
+   - Step 1: Review your Channel Blueprint (02-channel-blueprint.html) for your channel name, brand, and audience
+   - Step 2: Pick one of your 3 scripts (03-script-v01.txt, v02, v03) — read it, make sure you like it
+   - Step 3: Turn the script into a video using ONE of these free/cheap tools:
+     * Pictory AI (pictory.ai) — paste your script, AI auto-generates video with stock footage and voiceover. Easiest option.
+     * InVideo (invideo.io) — similar to Pictory, great templates for faceless videos
+     * CapCut (capcut.com) — completely free, more hands-on but no cost
+   - Step 4: Create your thumbnail using the guide in 04-thumbnail-guide.html
+   - Step 5: Upload to YouTube with the optimized title from your script and tags from your Blueprint
+   - Step 6: Pin your first comment using 05-pinned-comments.html
+
+3. Setting Up Your YouTube Channel (if you do not have one yet)
+   - How to create a channel on YouTube
+   - Profile picture and banner tips
+   - Channel description (copy from your Blueprint)
+   - Important settings: monetization preferences, default upload settings, playlists
+
+4. Uploading Tips
+   - Title optimization (use the titles from your scripts)
+   - Description template with keywords from the Blueprint
+   - Tags from the Blueprint
+   - Best times to publish (weekday mornings or weekend evenings)
+   - Always add your pinned comment right after publishing
+
+5. Growing Your Channel
+   - Consistency beats frequency (2-3 videos per week is ideal)
+   - First 30 days: focus on publishing, not views
+   - YouTube Partner Program requirements: 1,000 subscribers + 4,000 watch hours
+   - When you are ready for more scripts, just submit another request
+
+$HTML_STYLE
+
+Write the guide to: $output_dir/00-getting-started.html
+" --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
+                fi
+
+                if [ "$pipeline_ok" = true ]; then
+                    log "  Step 6 DONE"
                 fi
                 ;;
 

@@ -1,10 +1,10 @@
 /**
- * PATARAY PIPELINE — Google Apps Script
+ * FACELESS AI CHANNEL BUILDER — Google Apps Script
  *
  * Receives form submissions from the landing page and writes them to this Google Sheet.
  *
  * SETUP:
- *   1. Create a new Google Sheet (name it "Pataray Submissions")
+ *   1. Create a new Google Sheet (name it "Faceless AI Submissions")
  *   2. In Row 1, add headers: timestamp | email | niche | channel_status | request_type | status
  *   3. Go to Extensions > Apps Script
  *   4. Delete the default code, paste this entire file
@@ -49,6 +49,6 @@ function doPost(e) {
 
 function doGet(e) {
   return ContentService
-    .createTextOutput(JSON.stringify({ status: 'Pataray Pipeline receiver is running' }))
+    .createTextOutput(JSON.stringify({ status: 'Faceless AI Pipeline receiver is running' }))
     .setMimeType(ContentService.MimeType.JSON);
 }
