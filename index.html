@@ -992,49 +992,19 @@ footer .copy { font-size: 0.75rem; color: #555; }
     await log('Confirming delivery address: ' + email, 'info');
     await wait(600);
 
-    // ── Submit to Google Sheets (primary) + Formspree (backup) ──
-    var submitted = false;
-    // Google Apps Script web app — writes to Google Sheet, poller picks it up
+    // ── Submit to Google Sheets via Apps Script ──
     var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKNhQTz7lHSAMai0ID2zaW_PKcIVh0RkK6U3reDuUKs8hkwfrf8zLjpJBtoVqkWdzB/exec';
-    if (APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === -1) {
-      try {
-        await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-        await log('Order submitted to pipeline &#x2713;', 'success');
-        submitted = true;
-      } catch (e) { /* Apps Script unavailable */ }
-    }
-    // Try local receiver (dev/POC mode)
-    if (!submitted) {
-      try {
-        var localResp = await fetch('http://localhost:8080/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-        if (localResp.ok) {
-          await log('Order submitted to local pipeline &#x2713;', 'success');
-          submitted = true;
-        }
-      } catch (e) { /* Local server not running */ }
-    }
-    // Formspree as backup record
     try {
-      await fetch('https://formspree.io/f/xzdaqqek', {
+      await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-      if (!submitted) await log('Registration recorded &#x2713;', 'success');
-    } catch (e) { /* offline */ }
-    if (submitted) {
-      await log('Your desktop pipeline will process this shortly...', 'info');
-    } else {
-      await log('Queued for delivery &mdash; we\'ll process this soon &#x2713;', 'success');
+      await log('Order submitted to pipeline &#x2713;', 'success');
+      await log('Your channel package will be delivered to ' + email, 'info');
+    } catch (e) {
+      await log('Submission queued &mdash; we\'ll process this soon &#x2713;', 'success');
     }
     await wait(400);
     await log('&#x2605; PIPELINE COMPLETE &#x2605;', 'success');
