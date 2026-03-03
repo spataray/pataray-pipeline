@@ -1,0 +1,107 @@
+#!/bin/bash
+# ═══════════════════════════════════════════════════════
+# Faceless Channel Builder (FCB) Pipeline Manager
+# Single command to manage the watchdog process.
+# ═══════════════════════════════════════════════════════
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PIDFILE="$SCRIPT_DIR/poc/watchdog.pid"
+LOGFILE="$SCRIPT_DIR/poc/watchdog.log"
+WATCHDOG="$SCRIPT_DIR/poc/watchdog.sh"
+
+is_running() {
+    [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
+}
+
+cmd_start() {
+    local foreground=false
+    [ "${1:-}" = "-f" ] && foreground=true
+
+    if is_running; then
+        echo "Watchdog is already running (PID $(cat "$PIDFILE"))"
+        exit 1
+    fi
+
+    if [ "$foreground" = true ]; then
+        echo "Starting watchdog in foreground (Ctrl+C to stop)..."
+        echo $$ > "$PIDFILE"
+        trap 'rm -f "$PIDFILE"; echo ""; echo "Watchdog stopped."; exit 0' INT TERM
+        exec "$WATCHDOG"
+    else
+        echo "Starting watchdog..."
+        nohup "$WATCHDOG" > /dev/null 2>&1 &
+        echo $! > "$PIDFILE"
+        echo "Watchdog started (PID $!)"
+    fi
+}
+
+cmd_stop() {
+    if ! is_running; then
+        echo "Watchdog is not running."
+        rm -f "$PIDFILE"
+        exit 1
+    fi
+    local pid
+    pid=$(cat "$PIDFILE")
+    echo "Stopping watchdog (PID $pid)..."
+    kill "$pid"
+    rm -f "$PIDFILE"
+    echo "Watchdog stopped."
+}
+
+cmd_restart() {
+    if is_running; then
+        cmd_stop
+        sleep 1
+    fi
+    cmd_start
+}
+
+cmd_status() {
+    if is_running; then
+        echo "Watchdog is running (PID $(cat "$PIDFILE"))"
+    else
+        echo "Watchdog is not running."
+        rm -f "$PIDFILE"
+    fi
+}
+
+cmd_logs() {
+    if [ ! -f "$LOGFILE" ]; then
+        echo "No log file found."
+        exit 1
+    fi
+    tail -f "$LOGFILE"
+}
+
+cmd_help() {
+    cat <<'EOF'
+Faceless Channel Builder (FCB) Pipeline Manager
+
+Usage: ./pipeline <command>
+
+Commands:
+  start       Start the watchdog in the background
+  start -f    Start the watchdog in the foreground
+  stop        Stop the watchdog process
+  restart     Stop and restart the watchdog
+  status      Check if the watchdog is running
+  logs        Tail the watchdog log (live)
+
+Examples:
+  ./pipeline start        # background, survives terminal close
+  ./pipeline start -f     # foreground, see output live
+  ./pipeline logs
+  ./pipeline restart
+EOF
+}
+
+case "${1:-}" in
+    start)   cmd_start "${2:-}" ;;
+    stop)    cmd_stop    ;;
+    restart) cmd_restart ;;
+    status)  cmd_status  ;;
+    logs)    cmd_logs    ;;
+    *)       cmd_help    ;;
+esac

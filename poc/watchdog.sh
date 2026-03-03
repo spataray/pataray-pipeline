@@ -25,7 +25,7 @@ LOGFILE="$PROJECT_ROOT/poc/watchdog.log"
 POLL_INTERVAL=30  # seconds
 
 # ── Apps Script URL for status updates ──
-APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbyKNhQTz7lHSAMai0ID2zaW_PKcIVh0RkK6U3reDuUKs8hkwfrf8zLjpJBtoVqkWdzB/exec"
+APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbwdiYmP_4kAu7NZYby8PWsE7Xm-bqfAFZB5yXbMZrGBo5buPvedJf6RjCRL5cfc29gD/exec"
 
 # ── Load Gmail creds from crontab env (same vars) ──
 export GMAIL_USER="${GMAIL_USER:-spataray@gmail.com}"
@@ -164,8 +164,12 @@ while true; do
         log "  Status: PROCESSING"
 
         # Create output directory for this order
-        order_id="${filename%.json}"
-        output_dir="$PROCESSING/${order_id}_output"
+        # Use filename (without .json) for directory naming
+        dir_id="${filename%.json}"
+        output_dir="$PROCESSING/${dir_id}_output"
+        # Keep the order_id from JSON (ORD-xxx) for status updates to Google Sheets
+        # Fall back to filename if no order_id was provided
+        [ -z "$order_id" ] && order_id="$dir_id"
         mkdir -p "$output_dir"
 
         # ── Run the pipeline based on request type ──
@@ -615,8 +619,8 @@ Write the complete file to: $output_dir/05-pinned-comments.html
                 update_status "$order_id" 7 "Email sent!" "complete"
                 # Move everything to completed
                 mv "$PROCESSING/$filename" "$COMPLETED/$filename"
-                mv "$output_dir" "$COMPLETED/${order_id}_output"
-                completed_folder="$COMPLETED/${order_id}_output"
+                mv "$output_dir" "$COMPLETED/${dir_id}_output"
+                completed_folder="$COMPLETED/${dir_id}_output"
                 log "  Status: COMPLETED"
 
                 # Save reorder code mapping (points to the completed folder)
@@ -633,7 +637,7 @@ Write the complete file to: $output_dir/05-pinned-comments.html
             log "  Pipeline FAILED"
             update_status "$order_id" 0 "Error encountered" "failed"
             mv "$PROCESSING/$filename" "$FAILED/$filename"
-            [ -d "$output_dir" ] && mv "$output_dir" "$FAILED/${order_id}_output"
+            [ -d "$output_dir" ] && mv "$output_dir" "$FAILED/${dir_id}_output"
             log "  Status: FAILED (moved to failed/)"
         fi
 

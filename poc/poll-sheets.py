@@ -69,14 +69,32 @@ def fetch_sheet():
     with urllib.request.urlopen(req, timeout=15) as resp:
         text = resp.read().decode("utf-8")
 
-    reader = csv.DictReader(io.StringIO(text))
+    # Expected column order — used for positional mapping when headers
+    # are missing or empty (DictReader loses columns with duplicate blank headers)
+    EXPECTED_COLUMNS = [
+        "timestamp", "email", "niche", "channel_status", "request_type",
+        "status", "order_id", "pipeline_step", "pipeline_message", "reorder_code",
+    ]
+
+    reader = csv.reader(io.StringIO(text))
+    headers_raw = next(reader, [])
+    # Build column mapping: use header text if present, otherwise expected name by position
+    col_names = []
+    for i, h in enumerate(headers_raw):
+        name = h.strip().lower()
+        if name:
+            col_names.append(name)
+        elif i < len(EXPECTED_COLUMNS):
+            col_names.append(EXPECTED_COLUMNS[i])
+        else:
+            col_names.append(f"col_{i}")
+
     rows = []
-    for r in reader:
-        # Normalize header names (strip whitespace, lowercase)
+    for values in reader:
         cleaned = {}
-        for k, v in r.items():
-            if k:
-                cleaned[k.strip().lower()] = (v or "").strip()
+        for i, val in enumerate(values):
+            if i < len(col_names):
+                cleaned[col_names[i]] = (val or "").strip()
         rows.append(cleaned)
     return rows
 
