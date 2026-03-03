@@ -188,6 +188,37 @@ thead th:nth-child(4) { color: #fcd34d; }
 .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,102,241,.45); }
 .form-note { text-align: center; font-size: 0.78rem; color: #666; margin-top: 16px; }
 
+/* Mode toggle */
+.mode-toggle {
+  display: flex; gap: 0; margin-bottom: 28px;
+  border: 1px solid #2a2b3d; border-radius: 10px; overflow: hidden;
+}
+.mode-btn {
+  flex: 1; padding: 12px 16px; text-align: center;
+  font-size: 0.85rem; font-weight: 600; font-family: inherit;
+  background: transparent; color: #666; border: none; cursor: pointer;
+  transition: all 0.25s;
+}
+.mode-btn.active {
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+  color: #fff;
+}
+.mode-btn:not(.active):hover { background: rgba(99,102,241,.08); color: #b0b0c0; }
+
+/* Reorder fields */
+.reorder-fields { display: none; }
+.reorder-fields.visible { display: block; }
+.new-build-fields.hidden { display: none; }
+.reorder-code-input {
+  width: 100%; padding: 16px; background: #13141f;
+  border: 1px solid #2a2b3d; border-radius: 10px; color: #fff;
+  font-size: 1.5rem; font-family: 'Courier New', monospace;
+  font-weight: 800; letter-spacing: 8px; text-align: center;
+  text-transform: uppercase; outline: none; transition: border-color 0.3s;
+}
+.reorder-code-input:focus { border-color: #6366f1; }
+.reorder-code-input::placeholder { letter-spacing: 4px; font-size: 0.9rem; font-weight: 400; color: #555; }
+
 /* ══════════════════════════════════════════
    FOOTER
    ══════════════════════════════════════════ */
@@ -667,33 +698,55 @@ footer .copy { font-size: 0.75rem; color: #555; }
       <h2>Reserve Your Spot</h2>
       <p class="form-sub">Be first in line when early access opens.</p>
       <form id="waitlist-form">
-        <div class="form-group">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" name="email" placeholder="you@example.com" required>
+        <!-- Mode toggle -->
+        <div class="mode-toggle">
+          <button type="button" class="mode-btn active" id="mode-new" onclick="setFormMode('new')">Build New Channel</button>
+          <button type="button" class="mode-btn" id="mode-reorder" onclick="setFormMode('reorder')">I Have a Reorder Code</button>
         </div>
-        <div class="form-group">
-          <label for="niche">What niche interests you?</label>
-          <select id="niche" name="niche" required>
-            <option value="" disabled selected>Choose a niche...</option>
-            <option value="Business / Motivation">Business / Motivation</option>
-            <option value="Horror / Supernatural">Horror / Supernatural</option>
-            <option value="Legal / True Crime">Legal / True Crime</option>
-            <option value="Self-Improvement">Self-Improvement</option>
-            <option value="Language Learning">Language Learning</option>
-            <option value="Storytelling / Drama">Storytelling / Drama</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Do you already have a YouTube channel?</label>
-          <div class="radio-group">
-            <label><input type="radio" name="channel_status" value="No" required> No, starting fresh</label>
-            <label><input type="radio" name="channel_status" value="Yes, under 1K subs"> Yes, but under 1K subscribers</label>
-            <label><input type="radio" name="channel_status" value="Yes, 1K+ subs"> Yes, with 1K+ subscribers</label>
+
+        <!-- New build fields (shown by default) -->
+        <div class="new-build-fields" id="new-build-fields">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="niche">What niche interests you?</label>
+            <select id="niche" name="niche" required>
+              <option value="" disabled selected>Choose a niche...</option>
+              <option value="Business / Motivation">Business / Motivation</option>
+              <option value="Horror / Supernatural">Horror / Supernatural</option>
+              <option value="Legal / True Crime">Legal / True Crime</option>
+              <option value="Self-Improvement">Self-Improvement</option>
+              <option value="Language Learning">Language Learning</option>
+              <option value="Storytelling / Drama">Storytelling / Drama</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Do you already have a YouTube channel?</label>
+            <div class="radio-group">
+              <label><input type="radio" name="channel_status" value="No" required> No, starting fresh</label>
+              <label><input type="radio" name="channel_status" value="Yes, under 1K subs"> Yes, but under 1K subscribers</label>
+              <label><input type="radio" name="channel_status" value="Yes, 1K+ subs"> Yes, with 1K+ subscribers</label>
+            </div>
           </div>
         </div>
-        <button type="submit" class="btn-submit">Launch the Pipeline</button>
-        <p class="form-note">No credit card required. Watch the AI factory build your channel in real time.</p>
+
+        <!-- Reorder fields (hidden by default) -->
+        <div class="reorder-fields" id="reorder-fields">
+          <div class="form-group">
+            <label for="reorder-email">Email Address</label>
+            <input type="email" id="reorder-email" name="reorder_email" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label for="reorder-code">Your Reorder Code</label>
+            <input type="text" id="reorder-code" name="reorder_code" class="reorder-code-input" placeholder="ABC123" maxlength="6" autocomplete="off">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btn-submit">Launch the Pipeline</button>
+        <p class="form-note" id="form-note">No credit card required. Watch the AI factory build your channel in real time.</p>
       </form>
     </div>
   </div>
@@ -822,11 +875,60 @@ footer .copy { font-size: 0.75rem; color: #555; }
     });
   });
 
+  // ── Form mode toggle ──
+  var currentMode = 'new'; // 'new' or 'reorder'
+
+  window.setFormMode = function(mode) {
+    currentMode = mode;
+    var newFields = document.getElementById('new-build-fields');
+    var reorderFields = document.getElementById('reorder-fields');
+    var btnNew = document.getElementById('mode-new');
+    var btnReorder = document.getElementById('mode-reorder');
+    var submitBtn = document.getElementById('btn-submit');
+    var formNote = document.getElementById('form-note');
+
+    // Toggle required attributes
+    var emailInput = document.getElementById('email');
+    var nicheInput = document.getElementById('niche');
+    var channelRadios = document.querySelectorAll('input[name="channel_status"]');
+    var reorderEmail = document.getElementById('reorder-email');
+    var reorderCode = document.getElementById('reorder-code');
+
+    if (mode === 'reorder') {
+      newFields.classList.add('hidden');
+      reorderFields.classList.add('visible');
+      btnNew.classList.remove('active');
+      btnReorder.classList.add('active');
+      submitBtn.textContent = 'Get More Scripts';
+      formNote.textContent = 'We\'ll generate 3 new scripts that match your channel\'s voice and style.';
+      // Toggle required
+      emailInput.removeAttribute('required');
+      nicheInput.removeAttribute('required');
+      channelRadios.forEach(function(r) { r.removeAttribute('required'); });
+      reorderEmail.setAttribute('required', '');
+      reorderCode.setAttribute('required', '');
+    } else {
+      newFields.classList.remove('hidden');
+      reorderFields.classList.remove('visible');
+      btnNew.classList.add('active');
+      btnReorder.classList.remove('active');
+      submitBtn.textContent = 'Launch the Pipeline';
+      formNote.textContent = 'No credit card required. Watch the AI factory build your channel in real time.';
+      // Toggle required
+      emailInput.setAttribute('required', '');
+      nicheInput.setAttribute('required', '');
+      channelRadios[0].setAttribute('required', '');
+      reorderEmail.removeAttribute('required');
+      reorderCode.removeAttribute('required');
+    }
+  };
+
   // ── Pipeline engine ──
   var overlay = document.getElementById('pipeline-overlay');
   var terminal = document.getElementById('terminal-body');
   var successScreen = document.getElementById('success-screen');
   var formData = {};
+  var isReorder = false;
   var logQueue = [];
   var logBusy = false;
 
@@ -870,9 +972,18 @@ footer .copy { font-size: 0.75rem; color: #555; }
   var idleTimer = null;
 
   // Backend step → frontend station mapping
-  // Backend: 1=Niche, 2=Blueprint, 3=Scripts, 4=Thumbnails, 5=Comments, 6=GettingStarted, 7=Deliver
-  // Frontend: 0=Niche, 1=Blueprint, 2=Script, 3=Thumbs, 4=Comments, 5=Deliver
+  // Full build — Backend: 1=Niche, 2=Blueprint, 3=Scripts, 4=Thumbnails, 5=Comments, 6=GettingStarted, 7=Deliver
+  // Full build — Frontend: 0=Niche, 1=Blueprint, 2=Script, 3=Thumbs, 4=Comments, 5=Deliver
+  // Reorder   — Backend: 3=Scripts, 4=Thumbnails, 5=Comments, 7=Deliver
+  // Reorder   — Frontend: 2=Script, 3=Thumbs, 4=Comments, 5=Deliver (skip 0,1)
   function backendToStation(step) {
+    if (isReorder) {
+      if (step <= 3) return 2;
+      if (step === 4) return 3;
+      if (step === 5) return 4;
+      if (step >= 7) return 5;
+      return 2;
+    }
     if (step <= 1) return 0;
     if (step === 2) return 1;
     if (step === 3) return 2;
@@ -891,11 +1002,18 @@ footer .copy { font-size: 0.75rem; color: #555; }
     4: ['Crafting pinned comments...', 'Writing engagement hooks...', 'Building getting started guide...', 'Assembling onboarding steps...'],
     5: ['Packaging your channel files...', 'Preparing email delivery...', 'Finalizing your order...']
   };
+  var reorderIdleMessages = {
+    2: ['Reading your channel blueprint...', 'Matching your channel voice...', 'Crafting compelling hooks...', 'Writing new narration...'],
+    3: ['Designing thumbnail concepts...', 'Selecting color palettes...', 'Generating AI image prompts...', 'Optimizing for CTR...'],
+    4: ['Crafting pinned comments...', 'Writing engagement hooks...', 'Finishing up...'],
+    5: ['Packaging your new scripts...', 'Preparing email delivery...', 'Finalizing your order...']
+  };
   var idleIndex = 0;
 
   function showIdleMessage() {
     var station = backendToStation(currentStep);
-    var msgs = idleMessages[station] || idleMessages[0];
+    var msgSource = isReorder ? reorderIdleMessages : idleMessages;
+    var msgs = msgSource[station] || idleMessages[station] || idleMessages[0];
     var msg = msgs[idleIndex % msgs.length];
     idleIndex++;
     log(msg, 'info');
@@ -945,12 +1063,24 @@ footer .copy { font-size: 0.75rem; color: #555; }
     var niche = formData.niche;
 
     // Initial animation
-    log('Initializing AI Channel Factory...', 'system');
-    log('Request received: "' + niche + '"', 'info');
-    log('Order ID: ' + orderId, 'info');
-    log('Waiting for pipeline to start...', 'info');
-    setStation(0, 'active'); setCrumb(0, 'active');
-    currentStep = 0;
+    if (isReorder) {
+      log('Initializing Script Reorder...', 'system');
+      log('Reorder code: ' + (formData.reorder_code || ''), 'info');
+      log('Order ID: ' + orderId, 'info');
+      log('Loading your channel context...', 'info');
+      // Pre-mark Niche and Blueprint as done (already exist)
+      setStation(0, 'done'); setCrumb(0, 'done'); setBelt(0, 'done');
+      setStation(1, 'done'); setCrumb(1, 'done'); setBelt(1, 'done');
+      setStation(2, 'active'); setCrumb(2, 'active');
+      currentStep = 3;
+    } else {
+      log('Initializing AI Channel Factory...', 'system');
+      log('Request received: "' + niche + '"', 'info');
+      log('Order ID: ' + orderId, 'info');
+      log('Waiting for pipeline to start...', 'info');
+      setStation(0, 'active'); setCrumb(0, 'active');
+      currentStep = 0;
+    }
     startIdleMessages();
 
     pollTimer = setInterval(function() {
@@ -1041,22 +1171,43 @@ footer .copy { font-size: 0.75rem; color: #555; }
   document.getElementById('waitlist-form').addEventListener('submit', function(e) {
     e.preventDefault();
     var f = this;
-    var emailVal = f.email.value.trim();
-    var nicheVal = f.niche.value;
-    var channelStatus = f.channel_status ? f.channel_status.value : 'Not specified';
-
-    if (!emailVal || !nicheVal) return;
-
     var orderId = generateOrderId();
 
-    formData = {
-      email: emailVal,
-      niche: nicheVal,
-      channel_status: channelStatus,
-      order_id: orderId
-    };
+    if (currentMode === 'reorder') {
+      var reorderEmailVal = document.getElementById('reorder-email').value.trim();
+      var reorderCodeVal = document.getElementById('reorder-code').value.trim().toUpperCase();
 
-    document.getElementById('pipeline-niche-display').textContent = nicheVal;
+      if (!reorderEmailVal || !reorderCodeVal) return;
+
+      isReorder = true;
+      formData = {
+        email: reorderEmailVal,
+        niche: 'Script Reorder',
+        channel_status: 'Returning customer',
+        request_type: 'reorder_scripts',
+        reorder_code: reorderCodeVal,
+        order_id: orderId
+      };
+
+      document.getElementById('pipeline-niche-display').textContent = 'Script Reorder';
+    } else {
+      var emailVal = f.email.value.trim();
+      var nicheVal = f.niche.value;
+      var channelStatus = f.channel_status ? f.channel_status.value : 'Not specified';
+
+      if (!emailVal || !nicheVal) return;
+
+      isReorder = false;
+      formData = {
+        email: emailVal,
+        niche: nicheVal,
+        channel_status: channelStatus,
+        order_id: orderId
+      };
+
+      document.getElementById('pipeline-niche-display').textContent = nicheVal;
+    }
+
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
 
@@ -1081,6 +1232,7 @@ footer .copy { font-size: 0.75rem; color: #555; }
     terminal.innerHTML = '';
     currentStep = -1;
     lastMessage = '';
+    isReorder = false;
     // Reset success screen text in case it was changed by failure
     document.querySelector('.success-title').textContent = 'Pipeline Complete';
     document.querySelector('.success-sub').innerHTML = 'Your channel package is being assembled. We\'ll send everything to <span class="success-email" id="success-email"></span> when early access opens.';

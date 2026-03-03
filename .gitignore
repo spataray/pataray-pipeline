@@ -8,6 +8,7 @@ submissions/completed/*.json
 submissions/completed/*_output/
 submissions/failed/*.json
 submissions/failed/*_output/
+submissions/reorder-codes.json
 
 # Runtime files
 poc/watchdog.log

@@ -45,21 +45,31 @@ else
     echo "Request types:"
     echo "  1) full_channel_build  (niche + blueprint + 3 scripts)"
     echo "  2) niche_research      (research report only)"
-    echo "  3) scripts_only        (3 scripts for existing channel)"
+    echo "  3) reorder_scripts     (3 new scripts for existing channel)"
     echo ""
     read -rp "Pick type (1-3): " TYPE_NUM
     case "$TYPE_NUM" in
         1) REQUEST_TYPE="full_channel_build" ;;
         2) REQUEST_TYPE="niche_research" ;;
-        3) REQUEST_TYPE="scripts_only" ;;
+        3) REQUEST_TYPE="reorder_scripts" ;;
         *) REQUEST_TYPE="full_channel_build" ;;
     esac
+
+    REORDER_CODE=""
+    if [ "$REQUEST_TYPE" = "reorder_scripts" ]; then
+        read -rp "Reorder code: " REORDER_CODE
+    fi
 fi
 
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 SAFE_NICHE=$(echo "$NICHE" | tr '/ ' '-_' | tr '[:upper:]' '[:lower:]')
 FILENAME="${TIMESTAMP}_${SAFE_NICHE}.json"
 FILEPATH="$PENDING/$FILENAME"
+
+REORDER_FIELD=""
+if [ -n "${REORDER_CODE:-}" ]; then
+    REORDER_FIELD="$(printf ',\n  "reorder_code": "%s"' "$REORDER_CODE")"
+fi
 
 cat > "$FILEPATH" << ENDJSON
 {
@@ -68,7 +78,7 @@ cat > "$FILEPATH" << ENDJSON
   "channel_status": "No",
   "request_type": "$REQUEST_TYPE",
   "submitted_at": "$(date '+%Y-%m-%d %H:%M:%S')",
-  "status": "pending"
+  "status": "pending"${REORDER_FIELD}
 }
 ENDJSON
 
@@ -78,5 +88,6 @@ echo "  File: $FILEPATH"
 echo "  Email: $EMAIL"
 echo "  Niche: $NICHE"
 echo "  Type: $REQUEST_TYPE"
+[ -n "${REORDER_CODE:-}" ] && echo "  Reorder code: $REORDER_CODE"
 echo ""
 echo "The watchdog will pick this up on its next poll cycle."

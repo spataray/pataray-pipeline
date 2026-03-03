@@ -49,6 +49,81 @@ update_status() {
         > /dev/null 2>&1 &
 }
 
+# ── Reorder code helpers ──
+REORDER_CODES_FILE="$PROJECT_ROOT/submissions/reorder-codes.json"
+
+generate_reorder_code() {
+    python3 -c "
+import random, string
+charset = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'
+print(''.join(random.choices(charset, k=6)))
+"
+}
+
+save_reorder_code() {
+    local code="$1" folder="$2" niche="$3" email_addr="$4"
+    python3 -c "
+import json, os
+from datetime import datetime, timezone
+
+path = '$REORDER_CODES_FILE'
+if os.path.exists(path):
+    with open(path) as f:
+        data = json.load(f)
+else:
+    data = {}
+
+data['$code'] = {
+    'folder': '$folder',
+    'niche': '$niche',
+    'email': '$email_addr',
+    'created_at': datetime.now(timezone.utc).isoformat(),
+    'uses': 0
+}
+
+with open(path, 'w') as f:
+    json.dump(data, f, indent=2)
+"
+}
+
+lookup_reorder_code() {
+    local code="$1"
+    python3 -c "
+import json, os, sys
+
+path = '$REORDER_CODES_FILE'
+if not os.path.exists(path):
+    print('INVALID')
+    sys.exit(0)
+
+with open(path) as f:
+    data = json.load(f)
+
+entry = data.get('$code')
+if not entry:
+    print('INVALID')
+else:
+    print(entry['folder'])
+"
+}
+
+increment_reorder_uses() {
+    local code="$1"
+    python3 -c "
+import json
+
+path = '$REORDER_CODES_FILE'
+with open(path) as f:
+    data = json.load(f)
+
+if '$code' in data:
+    data['$code']['uses'] = data['$code'].get('uses', 0) + 1
+
+with open(path, 'w') as f:
+    json.dump(data, f, indent=2)
+"
+}
+
 log "═══ Faceless AI Watchdog started ═══"
 log "Monitoring: $PENDING"
 log "Poll interval: ${POLL_INTERVAL}s"
@@ -75,6 +150,9 @@ while true; do
         niche=$(python3 -c "import json; d=json.load(open('$submission')); print(d.get('niche',''))")
         request_type=$(python3 -c "import json; d=json.load(open('$submission')); print(d.get('request_type','full_channel_build'))")
         order_id=$(python3 -c "import json; d=json.load(open('$submission')); print(d.get('order_id',''))")
+        reorder_code=$(python3 -c "import json; d=json.load(open('$submission')); print(d.get('reorder_code',''))")
+        # Normalize reorder code to uppercase
+        reorder_code=$(echo "$reorder_code" | tr '[:lower:]' '[:upper:]')
 
         log "  Email: $email"
         log "  Niche: $niche"
@@ -257,6 +335,10 @@ Write the complete file to: $output_dir/05-pinned-comments.html
                     log "  Step 5 DONE"
                     update_status "$order_id" 5 "Comments complete"
 
+                    # Generate reorder code for this build (before Step 6 so it can be included in the guide)
+                    reorder_code=$(generate_reorder_code)
+                    log "  Reorder code generated: $reorder_code"
+
                     # Step 6/6: Getting Started Guide
                     log "  Step 6/6: Generating getting started guide..."
                     update_status "$order_id" 6 "Building your getting started guide..."
@@ -297,7 +379,12 @@ Create a comprehensive Getting Started guide for a complete beginner. Structure 
    - Consistency beats frequency (2-3 videos per week is ideal)
    - First 30 days: focus on publishing, not views
    - YouTube Partner Program requirements: 1,000 subscribers + 4,000 watch hours
-   - When you are ready for more scripts, just submit another request
+
+6. Getting More Scripts
+   - Your personal reorder code is: $reorder_code
+   - When you want more scripts, go to the order form and click 'I Have a Reorder Code'
+   - Enter your code and we'll generate new scripts that match your channel's voice and style
+   - Each batch includes 3 new scripts, thumbnail designs, and pinned comments
 
 $HTML_STYLE
 
@@ -311,23 +398,125 @@ Write the guide to: $output_dir/00-getting-started.html
                 fi
                 ;;
 
-            scripts_only)
-                log "  Pipeline: Scripts Only (3 scripts for existing niche)"
-                claude --model sonnet -p "
-You are the Script Writer Agent. Write 3 complete faceless YouTube video scripts for the niche: \"$niche\"
+            reorder_scripts)
+                log "  Pipeline: Reorder Scripts (3 new scripts for existing channel)"
+                log "  Reorder code: $reorder_code"
+
+                # Look up the original folder from the reorder code
+                original_folder=$(lookup_reorder_code "$reorder_code")
+
+                if [ "$original_folder" = "INVALID" ] || [ -z "$original_folder" ]; then
+                    log "  ERROR: Invalid reorder code: $reorder_code"
+                    pipeline_ok=false
+                elif [ ! -d "$original_folder" ]; then
+                    log "  ERROR: Original folder not found: $original_folder"
+                    pipeline_ok=false
+                else
+                    log "  Original folder: $original_folder"
+
+                    # Count existing scripts to determine next numbers
+                    existing_count=$(ls "$original_folder"/03-script-v*.txt 2>/dev/null | wc -l)
+                    next_start=$((existing_count + 1))
+                    next_v1=$(printf "%02d" $next_start)
+                    next_v2=$(printf "%02d" $((next_start + 1)))
+                    next_v3=$(printf "%02d" $((next_start + 2)))
+                    log "  Existing scripts: $existing_count, next: v$next_v1-v$next_v3"
+
+                    # Shared HTML styling
+                    HTML_STYLE="Write the output as a complete, self-contained HTML file with professional dark theme styling. Use a <style> tag with these CSS rules: body { background:#0f1117; color:#e0e0e0; font-family:Segoe UI,Tahoma,sans-serif; padding:40px; line-height:1.7; margin:0; } h1 { color:#fff; border-bottom:2px solid #6366f1; padding-bottom:12px; } h2 { color:#22d3ee; margin-top:32px; } h3 { color:#67e8f9; } p,li { color:#b0b0c0; } .card { background:#1a1b26; border:1px solid #2a2b3d; border-radius:12px; padding:20px; margin:16px 0; } table { width:100%; border-collapse:collapse; margin:16px 0; } th { background:#1a1b26; color:#fff; padding:12px; text-align:left; border-bottom:2px solid #6366f1; } td { padding:10px 12px; border-bottom:1px solid #2a2b3d; color:#b0b0c0; } a { color:#22d3ee; } .highlight { color:#10b981; font-weight:bold; } Wrap all content in a centered div (max-width:800px; margin:0 auto). End with a footer div: Faceless AI Channel Builder. Make it polished and modern."
+
+                    # Step 1/3: Generate 3 new scripts using original blueprint + existing scripts as context
+                    log "  Step 1/3: Generating 3 new scripts..."
+                    update_status "$order_id" 3 "Writing new video scripts..."
+                    claude --model sonnet -p "
+You are the Script Writer Agent. You are writing NEW scripts for a RETURNING customer.
+
+Read the channel blueprint at: $original_folder/02-channel-blueprint.html
+Also read ALL existing scripts in $original_folder (files matching 03-script-v*.txt) to understand the channel's established voice, tone, and style.
+
+Write 3 NEW scripts that:
+- Match the exact voice, tone, and style of the existing scripts
+- Cover NEW topics (do not repeat topics from existing scripts)
+- Use the same content pillars from the blueprint
+- Follow the same structural patterns (hooks, transitions, CTAs)
 
 Rules:
-- Each script 107-120 narration lines (HARD LIMIT: 133)
+- Each script must be 107-120 narration lines (HARD LIMIT: 133 lines)
 - Each script 800-1000 words
-- Strong hooks, clear value, emotional engagement
-- Format: plain text for Pictory AI compatibility
-- Include [HOOK], [INTRO], [BODY], [CTA], [OUTRO] markers
+- Target runtime: 8-9 minutes
+- Format: plain text, one narration line per line
+- Include [HOOK], [INTRO], [BODY], [CTA], [OUTRO] section markers
 
-Write each to:
-- $output_dir/script-v01.txt
-- $output_dir/script-v02.txt
-- $output_dir/script-v03.txt
+Write each script to:
+- $output_dir/03-script-v${next_v1}.txt
+- $output_dir/03-script-v${next_v2}.txt
+- $output_dir/03-script-v${next_v3}.txt
 " --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
+
+                    if [ "$pipeline_ok" = true ]; then
+                        log "  Step 1 DONE"
+                        update_status "$order_id" 4 "Designing thumbnails..."
+
+                        # Step 2/3: Thumbnail guide for new scripts
+                        log "  Step 2/3: Generating thumbnail guide..."
+                        claude --model sonnet -p "
+You are the Thumbnail Designer Agent. Read the 3 NEW scripts in $output_dir (03-script-v${next_v1}.txt, 03-script-v${next_v2}.txt, 03-script-v${next_v3}.txt) and the channel blueprint in $original_folder/02-channel-blueprint.html.
+
+For EACH of the 3 scripts, create a detailed thumbnail design section with:
+1. Thumbnail Concept — What the thumbnail should show
+2. Text Overlay — Bold text for the thumbnail (max 5 words)
+3. Color Scheme — 2-3 dominant colors that pop
+4. Background Style — Gradient, photo, dark/moody, bright, split-screen, etc.
+5. AI Image Prompt — A ready-to-paste prompt for Ideogram, Canva AI, or Leonardo AI
+
+After the 3 thumbnail briefs, include a brief HOW-TO reminder covering:
+- Free platforms: Canva (canva.com) with YouTube Thumbnail 1280x720 template
+- AI image generation: Ideogram (ideogram.ai), Leonardo AI (leonardo.ai), Canva AI
+
+$HTML_STYLE
+
+Write the complete guide to: $output_dir/04-thumbnail-guide.html
+" --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
+                    fi
+
+                    if [ "$pipeline_ok" = true ]; then
+                        log "  Step 2 DONE"
+                        update_status "$order_id" 5 "Crafting engagement comments..."
+
+                        # Step 3/3: Pinned comments for new scripts
+                        log "  Step 3/3: Generating pinned comments..."
+                        claude --model sonnet -p "
+You are the Engagement Agent. Read the 3 NEW scripts in $output_dir (03-script-v${next_v1}.txt, 03-script-v${next_v2}.txt, 03-script-v${next_v3}.txt).
+
+For EACH script, create a pinned comment section with:
+- The video title from the script
+- A ready-to-paste pinned comment (3-5 lines, conversational, 1-2 emoji, includes a question to encourage replies and a soft CTA for likes/subscribes)
+
+Make each comment feel natural and engaging, not salesy.
+
+$HTML_STYLE
+
+Write the complete file to: $output_dir/05-pinned-comments.html
+" --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
+                    fi
+
+                    if [ "$pipeline_ok" = true ]; then
+                        log "  Step 3 DONE"
+                        update_status "$order_id" 5 "Reorder complete"
+
+                        # Copy new scripts back to the original folder
+                        log "  Copying new scripts to original folder..."
+                        for script_file in "$output_dir"/03-script-v*.txt; do
+                            if [ -f "$script_file" ]; then
+                                cp "$script_file" "$original_folder/"
+                                log "  Copied $(basename "$script_file") to original folder"
+                            fi
+                        done
+
+                        # Increment uses counter
+                        increment_reorder_uses "$reorder_code"
+                    fi
+                fi
                 ;;
 
             *)
@@ -340,6 +529,12 @@ Write each to:
         if [ "$pipeline_ok" = true ]; then
             log "  Pipeline COMPLETE"
 
+            # For reorder_scripts, generate a new reorder code for next time
+            if [ "$request_type" = "reorder_scripts" ]; then
+                reorder_code=$(generate_reorder_code)
+                log "  New reorder code for next time: $reorder_code"
+            fi
+
             # Send email with results
             log "  Sending results to $email..."
             update_status "$order_id" 7 "Packaging and sending email..."
@@ -347,6 +542,8 @@ Write each to:
                 --to "$email" \
                 --niche "$niche" \
                 --output-dir "$output_dir" \
+                --reorder-code "$reorder_code" \
+                --request-type "$request_type" \
                 >> "$LOGFILE" 2>&1 && email_ok=true || email_ok=false
 
             if [ "$email_ok" = true ]; then
@@ -355,7 +552,14 @@ Write each to:
                 # Move everything to completed
                 mv "$PROCESSING/$filename" "$COMPLETED/$filename"
                 mv "$output_dir" "$COMPLETED/${order_id}_output"
+                completed_folder="$COMPLETED/${order_id}_output"
                 log "  Status: COMPLETED"
+
+                # Save reorder code mapping (points to the completed folder)
+                if [ -n "$reorder_code" ]; then
+                    save_reorder_code "$reorder_code" "$completed_folder" "$niche" "$email"
+                    log "  Reorder code $reorder_code saved → $completed_folder"
+                fi
             else
                 log "  WARNING: Email failed, output saved in processing/"
                 log "  Manual action needed: send files from $output_dir to $email"

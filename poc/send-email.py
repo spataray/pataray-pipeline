@@ -65,12 +65,16 @@ FILE_INFO = {
 }
 
 
-def build_html_email(to_addr, from_addr, niche, output_dir):
+def build_html_email(to_addr, from_addr, niche, output_dir, reorder_code="", request_type="full_channel_build"):
     """Build professional HTML email with dark theme."""
     msg = email.mime.multipart.MIMEMultipart("mixed")
     msg["From"] = from_addr
     msg["To"] = to_addr
-    msg["Subject"] = f"Your AI Channel Package Is Ready — {niche}"
+
+    if request_type == "reorder_scripts":
+        msg["Subject"] = f"Your New Scripts Are Ready — {niche}"
+    else:
+        msg["Subject"] = f"Your AI Channel Package Is Ready — {niche}"
 
     files = sorted(
         f for f in os.listdir(output_dir)
@@ -189,6 +193,15 @@ def build_html_email(to_addr, from_addr, niche, output_dir):
     </table>
   </td></tr>
 
+  {"" if not reorder_code else '''<!-- Reorder Code -->
+  <tr><td style="padding:0 32px 24px;background:#1a1b26;border-left:1px solid #2a2b3d;border-right:1px solid #2a2b3d;">
+    <div style="background:linear-gradient(135deg,#1e1b4b,#172554);border:1px solid #4338ca;border-radius:12px;padding:24px;text-align:center;">
+      <p style="color:#a5b4fc;font-size:13px;margin:0 0 12px;font-weight:600;">Your Reorder Code</p>
+      <div style="font-family:'Courier New',monospace;font-size:32px;font-weight:800;color:#fff;letter-spacing:8px;margin:0 0 12px;">''' + reorder_code + '''</div>
+      <p style="color:#888;font-size:12px;margin:0;">Want more scripts? Go to the order form, click <strong style="color:#67e8f9;">"I Have a Reorder Code"</strong>, and enter this code. We'll generate new scripts that match your channel's voice and style.</p>
+    </div>
+  </td></tr>'''}
+
   <!-- Footer -->
   <tr><td style="padding:24px 32px;background:#13141f;border-radius:0 0 16px 16px;border:1px solid #2a2b3d;border-top:none;text-align:center;">
     <p style="color:#666;font-size:12px;margin:0 0 4px;">Questions? Just reply to this email.</p>
@@ -239,6 +252,8 @@ def main():
     parser.add_argument("--to", required=True, help="Recipient email")
     parser.add_argument("--niche", required=True, help="Niche name for subject line")
     parser.add_argument("--output-dir", required=True, help="Directory with output files")
+    parser.add_argument("--reorder-code", default="", help="Reorder code for returning customers")
+    parser.add_argument("--request-type", default="full_channel_build", help="Request type (full_channel_build or reorder_scripts)")
     args = parser.parse_args()
 
     gmail_user = os.environ.get("GMAIL_USER", "spataray@gmail.com")
@@ -253,7 +268,7 @@ def main():
         sys.exit(1)
 
     print(f"Building email to {args.to}...")
-    msg = build_html_email(args.to, gmail_user, args.niche, args.output_dir)
+    msg = build_html_email(args.to, gmail_user, args.niche, args.output_dir, args.reorder_code, args.request_type)
 
     print(f"Sending via smtp.gmail.com as {gmail_user}...")
     send(msg, gmail_user, gmail_pass)

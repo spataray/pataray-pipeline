@@ -92,6 +92,7 @@ def create_submission(row):
     request_type = row.get("request_type", "full_channel_build")
     status = row.get("status", "pending")
     order_id = row.get("order_id", "")
+    reorder_code = row.get("reorder_code", "")
 
     # Only process pending rows
     if status.lower() != "pending":
@@ -111,8 +112,10 @@ def create_submission(row):
         "submitted_at": ts,
         "status": "pending",
         "source": "google_sheets",
-        "order_id": order_id
+        "order_id": order_id,
     }
+    if reorder_code:
+        data["reorder_code"] = reorder_code
 
     with open(filepath, "w") as f:
         json.dump(data, f, indent=2)

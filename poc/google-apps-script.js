@@ -6,7 +6,7 @@
  *
  * SETUP:
  *   1. Create a new Google Sheet (name it "Faceless AI Submissions")
- *   2. In Row 1, add headers: timestamp | email | niche | channel_status | request_type | status | order_id | pipeline_step | pipeline_message
+ *   2. In Row 1, add headers: timestamp | email | niche | channel_status | request_type | status | order_id | pipeline_step | pipeline_message | reorder_code
  *   3. Go to Extensions > Apps Script
  *   4. Delete the default code, paste this entire file
  *   5. Click Deploy > New Deployment
@@ -58,7 +58,9 @@ function handleSubmit(sheet, data) {
   var pipelineStep = 0;
   var pipelineMessage = '';
 
-  sheet.appendRow([timestamp, email, niche, channelStatus, requestType, status, orderId, pipelineStep, pipelineMessage]);
+  var reorderCode = data.reorder_code || '';
+
+  sheet.appendRow([timestamp, email, niche, channelStatus, requestType, status, orderId, pipelineStep, pipelineMessage, reorderCode]);
 
   return ContentService
     .createTextOutput(JSON.stringify({ ok: true, message: 'Submission received', order_id: orderId }))
@@ -142,18 +144,20 @@ function handleGetStatus(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  // Read: F=status (6), H=pipeline_step (8), I=pipeline_message (9)
-  var rowData = sheet.getRange(row, 1, 1, 9).getValues()[0];
+  // Read: F=status (6), H=pipeline_step (8), I=pipeline_message (9), J=reorder_code (10)
+  var rowData = sheet.getRange(row, 1, 1, 10).getValues()[0];
   var status = rowData[5] || 'pending';
   var pipelineStep = rowData[7] || 0;
   var pipelineMessage = rowData[8] || '';
+  var reorderCode = rowData[9] || '';
 
   return ContentService
     .createTextOutput(JSON.stringify({
       ok: true,
       status: status,
       pipeline_step: Number(pipelineStep),
-      pipeline_message: String(pipelineMessage)
+      pipeline_message: String(pipelineMessage),
+      reorder_code: String(reorderCode)
     }))
     .setMimeType(ContentService.MimeType.JSON);
 }
