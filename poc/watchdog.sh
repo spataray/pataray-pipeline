@@ -255,35 +255,67 @@ Write the blueprint to: $output_dir/02-channel-blueprint.html
                     log "  Step 2 DONE"
                     update_status "$order_id" 2 "Channel Blueprint complete"
 
-                    # Step 3/6: Generate 3 sample scripts
-                    log "  Step 3/6: Generating 3 sample scripts..."
+                    # Step 3/6: Generate 3 sample scripts (PARALLEL)
+                    log "  Step 3/6: Generating 3 sample scripts (parallel)..."
                     update_status "$order_id" 3 "Writing video scripts..."
-                    claude --model sonnet -p "
-You are the Script Writer Agent. Based on the channel blueprint in $output_dir/02-channel-blueprint.html, write 3 complete video scripts.
+
+                    SCRIPT_PROMPT_BASE="You are the Script Writer Agent. Read the channel blueprint at $output_dir/02-channel-blueprint.html.
+
+Write ONE complete video script for a faceless YouTube channel based on this blueprint.
 
 Rules:
-- Each script must be 107-120 narration lines (HARD LIMIT: 133 lines)
-- Each script 800-1000 words
+- 107-120 narration lines (HARD LIMIT: 133 lines)
+- 800-1000 words
 - Target runtime: 8-9 minutes
 - Format: plain text, one narration line per line
 - Include [HOOK], [INTRO], [BODY], [CTA], [OUTRO] section markers
-- Make them A+ quality: strong hooks, clear value, emotional engagement
+- A+ quality: strong hook, clear value, emotional engagement
+- Pick a DIFFERENT topic from the blueprint's content calendar"
 
-Write each script to a separate file:
-- $output_dir/03-script-v01.txt
-- $output_dir/03-script-v02.txt
-- $output_dir/03-script-v03.txt
-" --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
+                    s1_ok=true; s2_ok=true; s3_ok=true
+
+                    claude --model sonnet -p "$SCRIPT_PROMPT_BASE
+
+Pick the 1st topic from the content calendar. Write the script to: $output_dir/03-script-v01.txt
+" --allowedTools "Read,Write" > /dev/null 2>&1 || s1_ok=false &
+                    pid_s1=$!
+
+                    claude --model sonnet -p "$SCRIPT_PROMPT_BASE
+
+Pick the 4th topic from the content calendar (skip the first 3). Write the script to: $output_dir/03-script-v02.txt
+" --allowedTools "Read,Write" > /dev/null 2>&1 || s2_ok=false &
+                    pid_s2=$!
+
+                    claude --model sonnet -p "$SCRIPT_PROMPT_BASE
+
+Pick the 7th topic from the content calendar (skip the first 6). Write the script to: $output_dir/03-script-v03.txt
+" --allowedTools "Read,Write" > /dev/null 2>&1 || s3_ok=false &
+                    pid_s3=$!
+
+                    wait $pid_s1 || s1_ok=false
+                    wait $pid_s2 || s2_ok=false
+                    wait $pid_s3 || s3_ok=false
+
+                    if [ "$s1_ok" = false ] || [ "$s2_ok" = false ] || [ "$s3_ok" = false ]; then
+                        log "  WARNING: Some scripts failed (s1=$s1_ok s2=$s2_ok s3=$s3_ok)"
+                        # Continue if at least 1 succeeded
+                        if [ "$s1_ok" = false ] && [ "$s2_ok" = false ] && [ "$s3_ok" = false ]; then
+                            pipeline_ok=false
+                        fi
+                    fi
                 fi
 
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 3 DONE"
                     update_status "$order_id" 3 "Scripts complete"
 
-                    # Step 4/6: Thumbnail Guide
-                    log "  Step 4/6: Generating thumbnail guide..."
-                    update_status "$order_id" 4 "Designing thumbnails..."
-                    claude --model sonnet -p "
+                    # Steps 4+5 run in PARALLEL (both read scripts, write different files)
+                    log "  Steps 4+5: Thumbnails + Pinned comments (parallel)..."
+                    update_status "$order_id" 4 "Designing thumbnails + crafting comments..."
+
+                    step4_ok=true; step5_ok=true
+
+                    claude --model haiku -p "
 You are the Thumbnail Designer Agent. Read all 3 scripts in $output_dir (03-script-v01.txt, 03-script-v02.txt, 03-script-v03.txt) and the channel blueprint in $output_dir/02-channel-blueprint.html.
 
 For EACH of the 3 scripts, create a detailed thumbnail design section with:
@@ -302,17 +334,10 @@ After the 3 thumbnail briefs, include a HOW-TO section covering:
 $HTML_STYLE
 
 Write the complete guide to: $output_dir/04-thumbnail-guide.html
-" --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
-                fi
+" --allowedTools "Read,Write" > /dev/null 2>&1 || step4_ok=false &
+                    pid_s4=$!
 
-                if [ "$pipeline_ok" = true ]; then
-                    log "  Step 4 DONE"
-                    update_status "$order_id" 4 "Thumbnails complete"
-
-                    # Step 5/6: Pinned Comments
-                    log "  Step 5/6: Generating pinned comments..."
-                    update_status "$order_id" 5 "Crafting engagement comments..."
-                    claude --model sonnet -p "
+                    claude --model haiku -p "
 You are the Engagement Agent. Read all 3 scripts in $output_dir (03-script-v01.txt, 03-script-v02.txt, 03-script-v03.txt).
 
 For EACH script, create a pinned comment section with:
@@ -328,12 +353,21 @@ After the 3 pinned comments, include:
 $HTML_STYLE
 
 Write the complete file to: $output_dir/05-pinned-comments.html
-" --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
+" --allowedTools "Read,Write" > /dev/null 2>&1 || step5_ok=false &
+                    pid_s5=$!
+
+                    wait $pid_s4 || step4_ok=false
+                    wait $pid_s5 || step5_ok=false
+
+                    if [ "$step4_ok" = false ] || [ "$step5_ok" = false ]; then
+                        log "  WARNING: step4=$step4_ok step5=$step5_ok"
+                        [ "$step4_ok" = false ] && [ "$step5_ok" = false ] && pipeline_ok=false
+                    fi
                 fi
 
                 if [ "$pipeline_ok" = true ]; then
-                    log "  Step 5 DONE"
-                    update_status "$order_id" 5 "Comments complete"
+                    log "  Steps 4+5 DONE"
+                    update_status "$order_id" 5 "Thumbnails + comments complete"
 
                     # Generate reorder code for this build (before Step 6 so it can be included in the guide)
                     reorder_code=$(generate_reorder_code)
@@ -342,7 +376,7 @@ Write the complete file to: $output_dir/05-pinned-comments.html
                     # Step 6/6: Getting Started Guide
                     log "  Step 6/6: Generating getting started guide..."
                     update_status "$order_id" 6 "Building your getting started guide..."
-                    claude --model sonnet -p "
+                    claude --model haiku -p "
 You are the Onboarding Guide Agent. Read all the files in $output_dir to understand what was delivered to this customer.
 
 Create a comprehensive Getting Started guide for a complete beginner. Structure it as:
@@ -425,41 +459,68 @@ Write the guide to: $output_dir/00-getting-started.html
                     # Shared HTML styling
                     HTML_STYLE="Write the output as a complete, self-contained HTML file with professional dark theme styling. Use a <style> tag with these CSS rules: body { background:#0f1117; color:#e0e0e0; font-family:Segoe UI,Tahoma,sans-serif; padding:40px; line-height:1.7; margin:0; } h1 { color:#fff; border-bottom:2px solid #6366f1; padding-bottom:12px; } h2 { color:#22d3ee; margin-top:32px; } h3 { color:#67e8f9; } p,li { color:#b0b0c0; } .card { background:#1a1b26; border:1px solid #2a2b3d; border-radius:12px; padding:20px; margin:16px 0; } table { width:100%; border-collapse:collapse; margin:16px 0; } th { background:#1a1b26; color:#fff; padding:12px; text-align:left; border-bottom:2px solid #6366f1; } td { padding:10px 12px; border-bottom:1px solid #2a2b3d; color:#b0b0c0; } a { color:#22d3ee; } .highlight { color:#10b981; font-weight:bold; } Wrap all content in a centered div (max-width:800px; margin:0 auto). End with a footer div: Faceless AI Channel Builder. Make it polished and modern."
 
-                    # Step 1/3: Generate 3 new scripts using original blueprint + existing scripts as context
-                    log "  Step 1/3: Generating 3 new scripts..."
+                    # Step 1/3: Generate 3 new scripts (PARALLEL)
+                    log "  Step 1/3: Generating 3 new scripts (parallel)..."
                     update_status "$order_id" 3 "Writing new video scripts..."
-                    claude --model sonnet -p "
-You are the Script Writer Agent. You are writing NEW scripts for a RETURNING customer.
+
+                    REORDER_PROMPT_BASE="You are the Script Writer Agent writing NEW scripts for a RETURNING customer.
 
 Read the channel blueprint at: $original_folder/02-channel-blueprint.html
 Also read ALL existing scripts in $original_folder (files matching 03-script-v*.txt) to understand the channel's established voice, tone, and style.
 
-Write 3 NEW scripts that:
-- Match the exact voice, tone, and style of the existing scripts
-- Cover NEW topics (do not repeat topics from existing scripts)
-- Use the same content pillars from the blueprint
-- Follow the same structural patterns (hooks, transitions, CTAs)
+Write ONE NEW script that:
+- Matches the exact voice, tone, and style of the existing scripts
+- Covers a NEW topic (do not repeat topics from existing scripts)
+- Uses the same content pillars from the blueprint
+- Follows the same structural patterns (hooks, transitions, CTAs)
 
 Rules:
-- Each script must be 107-120 narration lines (HARD LIMIT: 133 lines)
-- Each script 800-1000 words
+- 107-120 narration lines (HARD LIMIT: 133 lines)
+- 800-1000 words
 - Target runtime: 8-9 minutes
 - Format: plain text, one narration line per line
-- Include [HOOK], [INTRO], [BODY], [CTA], [OUTRO] section markers
+- Include [HOOK], [INTRO], [BODY], [CTA], [OUTRO] section markers"
 
-Write each script to:
-- $output_dir/03-script-v${next_v1}.txt
-- $output_dir/03-script-v${next_v2}.txt
-- $output_dir/03-script-v${next_v3}.txt
-" --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
+                    rs1_ok=true; rs2_ok=true; rs3_ok=true
+
+                    claude --model sonnet -p "$REORDER_PROMPT_BASE
+
+Pick a topic from the blueprint's content calendar that has NOT been written yet. Write the script to: $output_dir/03-script-v${next_v1}.txt
+" --allowedTools "Read,Write" > /dev/null 2>&1 || rs1_ok=false &
+                    pid_rs1=$!
+
+                    claude --model sonnet -p "$REORDER_PROMPT_BASE
+
+Pick a DIFFERENT topic from the blueprint's content calendar that has NOT been written yet (skip the first few calendar items). Write the script to: $output_dir/03-script-v${next_v2}.txt
+" --allowedTools "Read,Write" > /dev/null 2>&1 || rs2_ok=false &
+                    pid_rs2=$!
+
+                    claude --model sonnet -p "$REORDER_PROMPT_BASE
+
+Pick yet ANOTHER topic from the blueprint's content calendar that has NOT been written yet (skip the first several calendar items). Write the script to: $output_dir/03-script-v${next_v3}.txt
+" --allowedTools "Read,Write" > /dev/null 2>&1 || rs3_ok=false &
+                    pid_rs3=$!
+
+                    wait $pid_rs1 || rs1_ok=false
+                    wait $pid_rs2 || rs2_ok=false
+                    wait $pid_rs3 || rs3_ok=false
+
+                    if [ "$rs1_ok" = false ] || [ "$rs2_ok" = false ] || [ "$rs3_ok" = false ]; then
+                        log "  WARNING: Some scripts failed (s1=$rs1_ok s2=$rs2_ok s3=$rs3_ok)"
+                        if [ "$rs1_ok" = false ] && [ "$rs2_ok" = false ] && [ "$rs3_ok" = false ]; then
+                            pipeline_ok=false
+                        fi
+                    fi
 
                     if [ "$pipeline_ok" = true ]; then
                         log "  Step 1 DONE"
-                        update_status "$order_id" 4 "Designing thumbnails..."
+                        update_status "$order_id" 4 "Designing thumbnails + crafting comments..."
 
-                        # Step 2/3: Thumbnail guide for new scripts
-                        log "  Step 2/3: Generating thumbnail guide..."
-                        claude --model sonnet -p "
+                        # Steps 2+3 run in PARALLEL
+                        log "  Steps 2+3: Thumbnails + Pinned comments (parallel)..."
+                        r_step2_ok=true; r_step3_ok=true
+
+                        claude --model haiku -p "
 You are the Thumbnail Designer Agent. Read the 3 NEW scripts in $output_dir (03-script-v${next_v1}.txt, 03-script-v${next_v2}.txt, 03-script-v${next_v3}.txt) and the channel blueprint in $original_folder/02-channel-blueprint.html.
 
 For EACH of the 3 scripts, create a detailed thumbnail design section with:
@@ -476,16 +537,10 @@ After the 3 thumbnail briefs, include a brief HOW-TO reminder covering:
 $HTML_STYLE
 
 Write the complete guide to: $output_dir/04-thumbnail-guide.html
-" --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
-                    fi
+" --allowedTools "Read,Write" > /dev/null 2>&1 || r_step2_ok=false &
+                        pid_rt=$!
 
-                    if [ "$pipeline_ok" = true ]; then
-                        log "  Step 2 DONE"
-                        update_status "$order_id" 5 "Crafting engagement comments..."
-
-                        # Step 3/3: Pinned comments for new scripts
-                        log "  Step 3/3: Generating pinned comments..."
-                        claude --model sonnet -p "
+                        claude --model haiku -p "
 You are the Engagement Agent. Read the 3 NEW scripts in $output_dir (03-script-v${next_v1}.txt, 03-script-v${next_v2}.txt, 03-script-v${next_v3}.txt).
 
 For EACH script, create a pinned comment section with:
@@ -497,11 +552,20 @@ Make each comment feel natural and engaging, not salesy.
 $HTML_STYLE
 
 Write the complete file to: $output_dir/05-pinned-comments.html
-" --allowedTools "Read,Write" > /dev/null 2>&1 || pipeline_ok=false
+" --allowedTools "Read,Write" > /dev/null 2>&1 || r_step3_ok=false &
+                        pid_rc=$!
+
+                        wait $pid_rt || r_step2_ok=false
+                        wait $pid_rc || r_step3_ok=false
+
+                        if [ "$r_step2_ok" = false ] || [ "$r_step3_ok" = false ]; then
+                            log "  WARNING: step2=$r_step2_ok step3=$r_step3_ok"
+                            [ "$r_step2_ok" = false ] && [ "$r_step3_ok" = false ] && pipeline_ok=false
+                        fi
                     fi
 
                     if [ "$pipeline_ok" = true ]; then
-                        log "  Step 3 DONE"
+                        log "  Steps 2+3 DONE"
                         update_status "$order_id" 5 "Reorder complete"
 
                         # Copy new scripts back to the original folder
