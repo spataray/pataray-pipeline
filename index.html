@@ -188,6 +188,65 @@ thead th:nth-child(4) { color: #fcd34d; }
 .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,102,241,.45); }
 .form-note { text-align: center; font-size: 0.78rem; color: #666; margin-top: 16px; }
 
+/* ── Channel name suggester (step 2) ── */
+.name-picker-step { display: none; }
+.suggestions-loading { text-align: center; padding: 24px 0; color: #888; }
+.suggestions-loading .spin {
+  width: 28px; height: 28px; border: 3px solid #2a2b3d;
+  border-top-color: #6366f1; border-radius: 50%;
+  animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.suggestions-label { font-size: 0.82rem; color: #b0b0c0; margin-bottom: 10px; font-weight: 600; }
+.suggestions-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
+}
+.suggestion-card {
+  background: #13141f; border: 1px solid #2a2b3d; border-radius: 10px;
+  padding: 12px; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+}
+.suggestion-card:hover { border-color: #6366f1; }
+.suggestion-card.selected { border-color: #6366f1; background: rgba(99,102,241,.12); }
+.suggestion-name { font-size: 0.88rem; color: #fff; font-weight: 700; margin-bottom: 4px; }
+.suggestion-tagline { font-size: 0.72rem; color: #777; line-height: 1.4; }
+.btn-more-suggestions {
+  width: 100%; padding: 8px; background: transparent;
+  border: 1px dashed #2a2b3d; border-radius: 8px; color: #666;
+  font-size: 0.78rem; cursor: pointer; margin-bottom: 14px;
+  font-family: inherit; transition: border-color 0.2s, color 0.2s;
+}
+.btn-more-suggestions:hover { border-color: #6366f1; color: #a5b4fc; }
+.btn-more-suggestions:disabled { opacity: 0.4; cursor: default; }
+.divider-or {
+  text-align: center; color: #444; font-size: 0.75rem; margin: 2px 0 12px;
+  position: relative;
+}
+.divider-or::before, .divider-or::after {
+  content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #2a2b3d;
+}
+.divider-or::before { left: 0; } .divider-or::after { right: 0; }
+.custom-name-wrap { display: flex; gap: 8px; margin-bottom: 6px; }
+.custom-name-wrap input {
+  flex: 1; padding: 10px 14px; background: #13141f;
+  border: 1px solid #2a2b3d; border-radius: 8px; color: #e0e0e0;
+  font-size: 0.88rem; font-family: inherit; outline: none; transition: border-color 0.3s;
+}
+.custom-name-wrap input:focus { border-color: #6366f1; }
+.btn-check-avail {
+  padding: 10px 14px; background: #1a1b26; border: 1px solid #2a2b3d;
+  border-radius: 8px; color: #a5b4fc; font-size: 0.78rem; cursor: pointer;
+  font-family: inherit; white-space: nowrap; transition: border-color 0.2s;
+}
+.btn-check-avail:hover { border-color: #6366f1; }
+.availability-status { font-size: 0.76rem; min-height: 18px; margin-bottom: 12px; padding: 0 2px; }
+.avail-available { color: #10b981; } .avail-similar { color: #f59e0b; }
+.avail-taken { color: #ef4444; } .avail-checking { color: #888; } .avail-manual { color: #666; }
+.btn-step-back {
+  background: none; border: none; color: #555; font-size: 0.76rem;
+  cursor: pointer; padding: 0; margin-bottom: 14px; font-family: inherit;
+}
+.btn-step-back:hover { color: #a5b4fc; }
+
 /* Mode toggle */
 .mode-toggle {
   display: flex; gap: 0; margin-bottom: 28px;
@@ -733,6 +792,30 @@ footer .copy { font-size: 0.75rem; color: #555; }
           </div>
         </div>
 
+        <!-- Step 2: Channel name picker (hidden until step 1 submitted) -->
+        <div class="name-picker-step" id="name-picker-step">
+          <button type="button" class="btn-step-back" id="btn-step-back">&#x2190; Back</button>
+          <div id="suggestions-loading" class="suggestions-loading" style="display:none">
+            <div class="spin"></div>
+            <p>Finding the best channel names for your niche&hellip;</p>
+            <p style="font-size:0.72rem;color:#444;margin-top:4px">This takes about 10 seconds</p>
+          </div>
+          <div id="suggestions-content" style="display:none">
+            <p class="suggestions-label">Choose a channel name:</p>
+            <div class="suggestions-grid" id="suggestions-grid"></div>
+            <button type="button" class="btn-more-suggestions" id="btn-more-suggestions">Suggest 5 more names</button>
+            <div class="divider-or">or type your own</div>
+            <div class="form-group" style="margin-bottom:6px">
+              <label>Custom channel name</label>
+              <div class="custom-name-wrap">
+                <input type="text" id="custom-channel-name" placeholder="My Channel Name" autocomplete="off">
+                <button type="button" class="btn-check-avail" id="btn-check-availability">Check</button>
+              </div>
+            </div>
+            <div class="availability-status" id="availability-status"></div>
+          </div>
+        </div>
+
         <!-- Reorder fields (hidden by default) -->
         <div class="reorder-fields" id="reorder-fields">
           <div class="form-group">
@@ -745,7 +828,7 @@ footer .copy { font-size: 0.75rem; color: #555; }
           </div>
         </div>
 
-        <button type="submit" class="btn-submit" id="btn-submit">Launch the Pipeline</button>
+        <button type="submit" class="btn-submit" id="btn-submit">Get My Channel Names</button>
         <p class="form-note" id="form-note">No credit card required. Watch the AI factory build your channel in real time.</p>
       </form>
     </div>
@@ -877,6 +960,8 @@ footer .copy { font-size: 0.75rem; color: #555; }
 
   // ── Form mode toggle ──
   var currentMode = 'new'; // 'new' or 'reorder'
+  var currentFormStep = 1;  // 1 = niche form, 2 = name picker
+  var selectedChannelName = '';
 
   window.setFormMode = function(mode) {
     currentMode = mode;
@@ -912,8 +997,15 @@ footer .copy { font-size: 0.75rem; color: #555; }
       reorderFields.classList.remove('visible');
       btnNew.classList.add('active');
       btnReorder.classList.remove('active');
-      submitBtn.textContent = 'Launch the Pipeline';
+      submitBtn.textContent = 'Get My Channel Names';
+      submitBtn.disabled = false;
+      formNote.style.display = '';
       formNote.textContent = 'No credit card required. Watch the AI factory build your channel in real time.';
+      // Reset name picker step
+      currentFormStep = 1;
+      selectedChannelName = '';
+      document.getElementById('new-build-fields').style.display = '';
+      document.getElementById('name-picker-step').style.display = 'none';
       // Toggle required
       emailInput.setAttribute('required', '');
       nicheInput.setAttribute('required', '');
@@ -1167,18 +1259,150 @@ footer .copy { font-size: 0.75rem; color: #555; }
     }
   }
 
+  // ── Name suggester helpers ──
+  function getSelectedChannelStatus() {
+    var radios = document.querySelectorAll('input[name="channel_status"]');
+    for (var i = 0; i < radios.length; i++) {
+      if (radios[i].checked) return radios[i].value;
+    }
+    return 'Not specified';
+  }
+
+  function escHtml(str) {
+    return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function launchPipeline(orderId) {
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    }).catch(function() {});
+    setTimeout(function() { startStatusPolling(orderId); }, 600);
+  }
+
+  function startSuggestionsFlow() {
+    document.getElementById('new-build-fields').style.display = 'none';
+    document.getElementById('name-picker-step').style.display = 'block';
+    document.getElementById('suggestions-loading').style.display = 'block';
+    document.getElementById('suggestions-content').style.display = 'none';
+    document.getElementById('btn-submit').style.display = 'none';
+    document.getElementById('form-note').style.display = 'none';
+    fetchSuggestions(document.getElementById('niche').value, false);
+  }
+
+  function fetchSuggestions(niche, fresh) {
+    document.getElementById('suggestions-loading').style.display = 'block';
+    document.getElementById('suggestions-content').style.display = 'none';
+    document.getElementById('btn-more-suggestions').disabled = true;
+    var url = APPS_SCRIPT_URL + '?action=get_suggestions&niche=' + encodeURIComponent(niche)
+      + (fresh ? '&fresh=1' : '') + '&t=' + Date.now();
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(data) { populateSuggestions(data.ok ? (data.suggestions || []) : []); })
+      .catch(function() { populateSuggestions([]); });
+  }
+
+  function populateSuggestions(suggestions) {
+    document.getElementById('suggestions-loading').style.display = 'none';
+    document.getElementById('suggestions-content').style.display = 'block';
+    document.getElementById('btn-more-suggestions').disabled = false;
+
+    var grid = document.getElementById('suggestions-grid');
+    grid.innerHTML = '';
+    suggestions.forEach(function(s) {
+      var card = document.createElement('div');
+      card.className = 'suggestion-card';
+      card.innerHTML = '<div class="suggestion-name">' + escHtml(s.name) + '</div>'
+        + '<div class="suggestion-tagline">' + escHtml(s.tagline) + '</div>';
+      card.addEventListener('click', function() {
+        document.querySelectorAll('.suggestion-card').forEach(function(c) { c.classList.remove('selected'); });
+        card.classList.add('selected');
+        selectedChannelName = s.name;
+        document.getElementById('custom-channel-name').value = s.name;
+        document.getElementById('availability-status').textContent = '';
+        updateStep2Btn();
+      });
+      grid.appendChild(card);
+    });
+    if (suggestions.length === 0) {
+      grid.innerHTML = '<p style="color:#666;font-size:0.8rem;grid-column:1/-1;padding:8px 0">Could not load suggestions — enter your own name below.</p>';
+    }
+    currentFormStep = 2;
+    updateStep2Btn();
+  }
+
+  function updateStep2Btn() {
+    var btn = document.getElementById('btn-submit');
+    var name = document.getElementById('custom-channel-name').value.trim() || selectedChannelName;
+    btn.style.display = 'block';
+    btn.disabled = !name;
+    btn.textContent = name ? 'Launch the Pipeline \u2192' : 'Choose or enter a channel name';
+  }
+
+  function checkAvailability() {
+    var name = document.getElementById('custom-channel-name').value.trim();
+    if (!name) return;
+    var statusEl = document.getElementById('availability-status');
+    statusEl.className = 'availability-status avail-checking';
+    statusEl.textContent = 'Checking...';
+    var url = APPS_SCRIPT_URL + '?action=check_name&name=' + encodeURIComponent(name) + '&t=' + Date.now();
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var cls = 'avail-' + (data.status || 'manual');
+        statusEl.className = 'availability-status ' + cls;
+        statusEl.textContent = data.message || '';
+      })
+      .catch(function() {
+        statusEl.className = 'availability-status avail-manual';
+        statusEl.textContent = 'Could not check — search YouTube to verify.';
+      });
+  }
+
+  // Step-back button
+  document.getElementById('btn-step-back').addEventListener('click', function() {
+    currentFormStep = 1;
+    selectedChannelName = '';
+    document.getElementById('name-picker-step').style.display = 'none';
+    document.getElementById('new-build-fields').style.display = '';
+    document.getElementById('btn-submit').style.display = '';
+    document.getElementById('btn-submit').disabled = false;
+    document.getElementById('btn-submit').textContent = 'Get My Channel Names';
+    document.getElementById('form-note').style.display = '';
+    document.getElementById('availability-status').textContent = '';
+  });
+
+  // Generate more button
+  document.getElementById('btn-more-suggestions').addEventListener('click', function() {
+    fetchSuggestions(document.getElementById('niche').value, true);
+  });
+
+  // Custom name input — live update button state
+  document.getElementById('custom-channel-name').addEventListener('input', function() {
+    selectedChannelName = '';
+    document.querySelectorAll('.suggestion-card').forEach(function(c) { c.classList.remove('selected'); });
+    document.getElementById('availability-status').textContent = '';
+    if (currentFormStep === 2) updateStep2Btn();
+  });
+
+  // Availability check button
+  document.getElementById('btn-check-availability').addEventListener('click', checkAvailability);
+
   // ── Form handler ──
   document.getElementById('waitlist-form').addEventListener('submit', function(e) {
     e.preventDefault();
     var f = this;
-    var orderId = generateOrderId();
 
     if (currentMode === 'reorder') {
       var reorderEmailVal = document.getElementById('reorder-email').value.trim();
       var reorderCodeVal = document.getElementById('reorder-code').value.trim().toUpperCase();
-
       if (!reorderEmailVal || !reorderCodeVal) return;
 
+      var orderId = generateOrderId();
       isReorder = true;
       formData = {
         email: reorderEmailVal,
@@ -1188,39 +1412,35 @@ footer .copy { font-size: 0.75rem; color: #555; }
         reorder_code: reorderCodeVal,
         order_id: orderId
       };
-
       document.getElementById('pipeline-niche-display').textContent = 'Script Reorder';
-    } else {
-      var emailVal = f.email.value.trim();
-      var nicheVal = f.niche.value;
-      var channelStatus = f.channel_status ? f.channel_status.value : 'Not specified';
-
-      if (!emailVal || !nicheVal) return;
-
-      isReorder = false;
-      formData = {
-        email: emailVal,
-        niche: nicheVal,
-        channel_status: channelStatus,
-        order_id: orderId
-      };
-
-      document.getElementById('pipeline-niche-display').textContent = nicheVal;
+      launchPipeline(orderId);
+      return;
     }
 
-    overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    // New build — step 1: fetch suggestions
+    if (currentFormStep === 1) {
+      var emailVal = f.email.value.trim();
+      var nicheVal = f.niche.value;
+      if (!emailVal || !nicheVal || !getSelectedChannelStatus()) return;
+      startSuggestionsFlow();
+      return;
+    }
 
-    // Submit to Google Sheets (no-cors — opaque response)
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    }).catch(function() {});
+    // New build — step 2: launch pipeline
+    var channelName = document.getElementById('custom-channel-name').value.trim() || selectedChannelName;
+    if (!channelName) return;
 
-    // Start real-time status polling
-    setTimeout(function() { startStatusPolling(orderId); }, 600);
+    var orderId2 = generateOrderId();
+    isReorder = false;
+    formData = {
+      email: f.email.value.trim(),
+      niche: f.niche.value,
+      channel_status: getSelectedChannelStatus(),
+      channel_name: channelName,
+      order_id: orderId2
+    };
+    document.getElementById('pipeline-niche-display').textContent = f.niche.value;
+    launchPipeline(orderId2);
   });
 
   // ── Back button ──
@@ -1233,6 +1453,16 @@ footer .copy { font-size: 0.75rem; color: #555; }
     currentStep = -1;
     lastMessage = '';
     isReorder = false;
+    // Reset name picker step
+    currentFormStep = 1;
+    selectedChannelName = '';
+    document.getElementById('new-build-fields').style.display = '';
+    document.getElementById('name-picker-step').style.display = 'none';
+    document.getElementById('btn-submit').style.display = '';
+    document.getElementById('btn-submit').disabled = false;
+    document.getElementById('btn-submit').textContent = 'Get My Channel Names';
+    document.getElementById('form-note').style.display = '';
+    document.getElementById('availability-status').textContent = '';
     // Reset success screen text in case it was changed by failure
     document.querySelector('.success-title').textContent = 'Pipeline Complete';
     document.querySelector('.success-sub').innerHTML = 'Your channel package is being assembled. We\'ll send everything to <span class="success-email" id="success-email"></span> when early access opens.';

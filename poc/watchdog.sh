@@ -24,6 +24,10 @@ LOGFILE="$PROJECT_ROOT/poc/watchdog.log"
 
 POLL_INTERVAL=30  # seconds
 
+# ── Allow claude CLI to run (unset nested-session guard) ──
+unset CLAUDECODE 2>/dev/null || true
+unset CLAUDE_CODE_ENTRYPOINT 2>/dev/null || true
+
 # ── Apps Script URL for status updates ──
 APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbwdiYmP_4kAu7NZYby8PWsE7Xm-bqfAFZB5yXbMZrGBo5buPvedJf6RjCRL5cfc29gD/exec"
 
@@ -89,7 +93,7 @@ with open(path, 'w') as f:
 lookup_reorder_code() {
     local code="$1"
     python3 -c "
-import json, os, sys
+import json, os, sys, glob
 
 path = '$REORDER_CODES_FILE'
 if not os.path.exists(path):
@@ -102,8 +106,55 @@ with open(path) as f:
 entry = data.get('$code')
 if not entry:
     print('INVALID')
+    sys.exit(0)
+
+folder = entry['folder']
+
+# Validate folder has required files (blueprint + at least one script)
+blueprint = os.path.join(folder, '02-channel-blueprint.html')
+scripts = glob.glob(os.path.join(folder, '03-script-v*.txt'))
+
+if os.path.isdir(folder) and os.path.isfile(blueprint) and len(scripts) > 0:
+    print(folder)
+    sys.exit(0)
+
+# Self-heal: scan completed/ for a folder that has the blueprint and scripts
+import sys as _sys
+completed_dir = os.path.join('$COMPLETED')
+healed = None
+for d in sorted(os.listdir(completed_dir)):
+    candidate = os.path.join(completed_dir, d)
+    if not os.path.isdir(candidate):
+        continue
+    bp = os.path.join(candidate, '02-channel-blueprint.html')
+    sc = glob.glob(os.path.join(candidate, '03-script-v*.txt'))
+    if os.path.isfile(bp) and len(sc) > 0:
+        # Match by email to find the right channel
+        if entry.get('email'):
+            # Check if any sibling JSON has the same email
+            base = os.path.basename(candidate)
+            prefix = base.replace('_output', '')
+            json_path = os.path.join(completed_dir, prefix + '.json')
+            if os.path.isfile(json_path):
+                try:
+                    with open(json_path) as jf:
+                        jdata = json.load(jf)
+                    if jdata.get('email') == entry['email']:
+                        healed = candidate
+                        break
+                except:
+                    pass
+
+if healed:
+    # Update the mapping
+    entry['folder'] = healed
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=2)
+    print(healed, file=_sys.stderr)
+    print('HEALED:' + healed, file=_sys.stderr)
+    print(healed)
 else:
-    print(entry['folder'])
+    print('INVALID')
 "
 }
 
@@ -151,6 +202,7 @@ while true; do
         request_type=$(python3 -c "import json; d=json.load(open('$submission')); print(d.get('request_type','full_channel_build'))")
         order_id=$(python3 -c "import json; d=json.load(open('$submission')); print(d.get('order_id',''))")
         reorder_code=$(python3 -c "import json; d=json.load(open('$submission')); print(d.get('reorder_code',''))")
+        channel_name=$(python3 -c "import json; d=json.load(open('$submission')); print(d.get('channel_name',''))")
         # Normalize reorder code to uppercase
         reorder_code=$(echo "$reorder_code" | tr '[:lower:]' '[:upper:]')
 
@@ -236,11 +288,18 @@ Write the report to: $output_dir/01-niche-research.html
                     # Step 2/6: Channel Blueprint
                     log "  Step 2/6: Channel Blueprint..."
                     update_status "$order_id" 2 "Building channel blueprint..."
+                    # Build channel name instruction based on whether user chose one
+                    if [ -n "$channel_name" ]; then
+                        CHANNEL_NAME_INSTRUCTION="The customer has chosen their channel name: \"$channel_name\". Use this exact name throughout the blueprint — do NOT suggest alternative names."
+                    else
+                        CHANNEL_NAME_INSTRUCTION="Suggest three channel name options (with brief reasoning for each)."
+                    fi
+
                     claude --model sonnet -p "
 You are the Blueprint Architect Agent. Based on the niche research in $output_dir/01-niche-research.html, create a full channel blueprint.
 
 Include:
-1. Three channel name options (with reasoning)
+1. Channel name: $CHANNEL_NAME_INSTRUCTION
 2. Channel brand voice and tone
 3. Target audience persona (age, interests, problems)
 4. Content pillars (3-4 main topic categories)
@@ -281,31 +340,37 @@ Rules:
                     claude --model sonnet -p "$SCRIPT_PROMPT_BASE
 
 Pick the 1st topic from the content calendar. Write the script to: $output_dir/03-script-v01.txt
-" --allowedTools "Read,Write" > /dev/null 2>&1 || s1_ok=false &
+" --allowedTools "Read,Write" >> "$LOGFILE" 2>&1 &
                     pid_s1=$!
 
                     claude --model sonnet -p "$SCRIPT_PROMPT_BASE
 
 Pick the 4th topic from the content calendar (skip the first 3). Write the script to: $output_dir/03-script-v02.txt
-" --allowedTools "Read,Write" > /dev/null 2>&1 || s2_ok=false &
+" --allowedTools "Read,Write" >> "$LOGFILE" 2>&1 &
                     pid_s2=$!
 
                     claude --model sonnet -p "$SCRIPT_PROMPT_BASE
 
 Pick the 7th topic from the content calendar (skip the first 6). Write the script to: $output_dir/03-script-v03.txt
-" --allowedTools "Read,Write" > /dev/null 2>&1 || s3_ok=false &
+" --allowedTools "Read,Write" >> "$LOGFILE" 2>&1 &
                     pid_s3=$!
 
-                    wait $pid_s1 || s1_ok=false
-                    wait $pid_s2 || s2_ok=false
-                    wait $pid_s3 || s3_ok=false
+                    wait $pid_s1 && ec1=0 || ec1=$?
+                    wait $pid_s2 && ec2=0 || ec2=$?
+                    wait $pid_s3 && ec3=0 || ec3=$?
+                    [ $ec1 -ne 0 ] && s1_ok=false
+                    [ $ec2 -ne 0 ] && s2_ok=false
+                    [ $ec3 -ne 0 ] && s3_ok=false
+                    log "  Script exit codes: s1=$ec1 s2=$ec2 s3=$ec3"
+
+                    # Verify files were actually created
+                    [ ! -f "$output_dir/03-script-v01.txt" ] && s1_ok=false && log "  MISSING: 03-script-v01.txt"
+                    [ ! -f "$output_dir/03-script-v02.txt" ] && s2_ok=false && log "  MISSING: 03-script-v02.txt"
+                    [ ! -f "$output_dir/03-script-v03.txt" ] && s3_ok=false && log "  MISSING: 03-script-v03.txt"
 
                     if [ "$s1_ok" = false ] || [ "$s2_ok" = false ] || [ "$s3_ok" = false ]; then
-                        log "  WARNING: Some scripts failed (s1=$s1_ok s2=$s2_ok s3=$s3_ok)"
-                        # Continue if at least 1 succeeded
-                        if [ "$s1_ok" = false ] && [ "$s2_ok" = false ] && [ "$s3_ok" = false ]; then
-                            pipeline_ok=false
-                        fi
+                        log "  ERROR: Script generation failed (s1=$s1_ok s2=$s2_ok s3=$s3_ok)"
+                        pipeline_ok=false
                     fi
                 fi
 
@@ -338,7 +403,7 @@ After the 3 thumbnail briefs, include a HOW-TO section covering:
 $HTML_STYLE
 
 Write the complete guide to: $output_dir/04-thumbnail-guide.html
-" --allowedTools "Read,Write" > /dev/null 2>&1 || step4_ok=false &
+" --allowedTools "Read,Write" >> "$LOGFILE" 2>&1 &
                     pid_s4=$!
 
                     claude --model haiku -p "
@@ -357,15 +422,22 @@ After the 3 pinned comments, include:
 $HTML_STYLE
 
 Write the complete file to: $output_dir/05-pinned-comments.html
-" --allowedTools "Read,Write" > /dev/null 2>&1 || step5_ok=false &
+" --allowedTools "Read,Write" >> "$LOGFILE" 2>&1 &
                     pid_s5=$!
 
-                    wait $pid_s4 || step4_ok=false
-                    wait $pid_s5 || step5_ok=false
+                    wait $pid_s4 && ec4=0 || ec4=$?
+                    wait $pid_s5 && ec5=0 || ec5=$?
+                    [ $ec4 -ne 0 ] && step4_ok=false
+                    [ $ec5 -ne 0 ] && step5_ok=false
+                    log "  Steps 4+5 exit codes: s4=$ec4 s5=$ec5"
+
+                    # Verify files were actually created
+                    [ ! -f "$output_dir/04-thumbnail-guide.html" ] && step4_ok=false && log "  MISSING: 04-thumbnail-guide.html"
+                    [ ! -f "$output_dir/05-pinned-comments.html" ] && step5_ok=false && log "  MISSING: 05-pinned-comments.html"
 
                     if [ "$step4_ok" = false ] || [ "$step5_ok" = false ]; then
-                        log "  WARNING: step4=$step4_ok step5=$step5_ok"
-                        [ "$step4_ok" = false ] && [ "$step5_ok" = false ] && pipeline_ok=false
+                        log "  ERROR: Parallel steps failed (step4=$step4_ok step5=$step5_ok)"
+                        pipeline_ok=false
                     fi
                 fi
 
@@ -490,30 +562,37 @@ Rules:
                     claude --model sonnet -p "$REORDER_PROMPT_BASE
 
 Pick a topic from the blueprint's content calendar that has NOT been written yet. Write the script to: $output_dir/03-script-v${next_v1}.txt
-" --allowedTools "Read,Write" > /dev/null 2>&1 || rs1_ok=false &
+" --allowedTools "Read,Write" >> "$LOGFILE" 2>&1 &
                     pid_rs1=$!
 
                     claude --model sonnet -p "$REORDER_PROMPT_BASE
 
 Pick a DIFFERENT topic from the blueprint's content calendar that has NOT been written yet (skip the first few calendar items). Write the script to: $output_dir/03-script-v${next_v2}.txt
-" --allowedTools "Read,Write" > /dev/null 2>&1 || rs2_ok=false &
+" --allowedTools "Read,Write" >> "$LOGFILE" 2>&1 &
                     pid_rs2=$!
 
                     claude --model sonnet -p "$REORDER_PROMPT_BASE
 
 Pick yet ANOTHER topic from the blueprint's content calendar that has NOT been written yet (skip the first several calendar items). Write the script to: $output_dir/03-script-v${next_v3}.txt
-" --allowedTools "Read,Write" > /dev/null 2>&1 || rs3_ok=false &
+" --allowedTools "Read,Write" >> "$LOGFILE" 2>&1 &
                     pid_rs3=$!
 
-                    wait $pid_rs1 || rs1_ok=false
-                    wait $pid_rs2 || rs2_ok=false
-                    wait $pid_rs3 || rs3_ok=false
+                    wait $pid_rs1 && ec1=0 || ec1=$?
+                    wait $pid_rs2 && ec2=0 || ec2=$?
+                    wait $pid_rs3 && ec3=0 || ec3=$?
+                    [ $ec1 -ne 0 ] && rs1_ok=false
+                    [ $ec2 -ne 0 ] && rs2_ok=false
+                    [ $ec3 -ne 0 ] && rs3_ok=false
+                    log "  Reorder script exit codes: s1=$ec1 s2=$ec2 s3=$ec3"
+
+                    # Verify files were actually created
+                    [ ! -f "$output_dir/03-script-v${next_v1}.txt" ] && rs1_ok=false && log "  MISSING: 03-script-v${next_v1}.txt"
+                    [ ! -f "$output_dir/03-script-v${next_v2}.txt" ] && rs2_ok=false && log "  MISSING: 03-script-v${next_v2}.txt"
+                    [ ! -f "$output_dir/03-script-v${next_v3}.txt" ] && rs3_ok=false && log "  MISSING: 03-script-v${next_v3}.txt"
 
                     if [ "$rs1_ok" = false ] || [ "$rs2_ok" = false ] || [ "$rs3_ok" = false ]; then
-                        log "  WARNING: Some scripts failed (s1=$rs1_ok s2=$rs2_ok s3=$rs3_ok)"
-                        if [ "$rs1_ok" = false ] && [ "$rs2_ok" = false ] && [ "$rs3_ok" = false ]; then
-                            pipeline_ok=false
-                        fi
+                        log "  ERROR: Reorder script generation failed (s1=$rs1_ok s2=$rs2_ok s3=$rs3_ok)"
+                        pipeline_ok=false
                     fi
 
                     if [ "$pipeline_ok" = true ]; then
@@ -541,7 +620,7 @@ After the 3 thumbnail briefs, include a brief HOW-TO reminder covering:
 $HTML_STYLE
 
 Write the complete guide to: $output_dir/04-thumbnail-guide.html
-" --allowedTools "Read,Write" > /dev/null 2>&1 || r_step2_ok=false &
+" --allowedTools "Read,Write" >> "$LOGFILE" 2>&1 &
                         pid_rt=$!
 
                         claude --model haiku -p "
@@ -556,15 +635,22 @@ Make each comment feel natural and engaging, not salesy.
 $HTML_STYLE
 
 Write the complete file to: $output_dir/05-pinned-comments.html
-" --allowedTools "Read,Write" > /dev/null 2>&1 || r_step3_ok=false &
+" --allowedTools "Read,Write" >> "$LOGFILE" 2>&1 &
                         pid_rc=$!
 
-                        wait $pid_rt || r_step2_ok=false
-                        wait $pid_rc || r_step3_ok=false
+                        wait $pid_rt && ec2=0 || ec2=$?
+                        wait $pid_rc && ec3=0 || ec3=$?
+                        [ $ec2 -ne 0 ] && r_step2_ok=false
+                        [ $ec3 -ne 0 ] && r_step3_ok=false
+                        log "  Reorder steps 2+3 exit codes: s2=$ec2 s3=$ec3"
+
+                        # Verify files were actually created
+                        [ ! -f "$output_dir/04-thumbnail-guide.html" ] && r_step2_ok=false && log "  MISSING: 04-thumbnail-guide.html"
+                        [ ! -f "$output_dir/05-pinned-comments.html" ] && r_step3_ok=false && log "  MISSING: 05-pinned-comments.html"
 
                         if [ "$r_step2_ok" = false ] || [ "$r_step3_ok" = false ]; then
-                            log "  WARNING: step2=$r_step2_ok step3=$r_step3_ok"
-                            [ "$r_step2_ok" = false ] && [ "$r_step3_ok" = false ] && pipeline_ok=false
+                            log "  ERROR: Reorder parallel steps failed (step2=$r_step2_ok step3=$r_step3_ok)"
+                            pipeline_ok=false
                         fi
                     fi
 
@@ -592,6 +678,17 @@ Write the complete file to: $output_dir/05-pinned-comments.html
                 pipeline_ok=false
                 ;;
         esac
+
+        # ── Validate output directory has files before proceeding ──
+        if [ "$pipeline_ok" = true ]; then
+            file_count=$(find "$output_dir" -maxdepth 1 -type f -size +0c ! -name '.*' | wc -l)
+            if [ "$file_count" -eq 0 ]; then
+                log "  ERROR: Output directory is empty — pipeline produced no files: $output_dir"
+                pipeline_ok=false
+            else
+                log "  Output validation: $file_count file(s) in $output_dir"
+            fi
+        fi
 
         # ── Handle result ──
         if [ "$pipeline_ok" = true ]; then
@@ -623,10 +720,17 @@ Write the complete file to: $output_dir/05-pinned-comments.html
                 completed_folder="$COMPLETED/${dir_id}_output"
                 log "  Status: COMPLETED"
 
-                # Save reorder code mapping (points to the completed folder)
+                # Save reorder code mapping
                 if [ -n "$reorder_code" ]; then
-                    save_reorder_code "$reorder_code" "$completed_folder" "$niche" "$email"
-                    log "  Reorder code $reorder_code saved → $completed_folder"
+                    # For reorders, point to the original folder (where blueprint + all scripts live)
+                    # For full builds, point to the completed folder
+                    if [ "$request_type" = "reorder_scripts" ] && [ -n "$original_folder" ]; then
+                        save_reorder_code "$reorder_code" "$original_folder" "$niche" "$email"
+                        log "  Reorder code $reorder_code saved → $original_folder"
+                    else
+                        save_reorder_code "$reorder_code" "$completed_folder" "$niche" "$email"
+                        log "  Reorder code $reorder_code saved → $completed_folder"
+                    fi
                 fi
             else
                 log "  WARNING: Email failed, output saved in processing/"

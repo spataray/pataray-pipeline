@@ -73,7 +73,7 @@ def fetch_sheet():
     # are missing or empty (DictReader loses columns with duplicate blank headers)
     EXPECTED_COLUMNS = [
         "timestamp", "email", "niche", "channel_status", "request_type",
-        "status", "order_id", "pipeline_step", "pipeline_message", "reorder_code",
+        "status", "order_id", "pipeline_step", "pipeline_message", "reorder_code", "channel_name",
     ]
 
     reader = csv.reader(io.StringIO(text))
@@ -111,6 +111,7 @@ def create_submission(row):
     status = row.get("status", "pending")
     order_id = row.get("order_id", "")
     reorder_code = row.get("reorder_code", "")
+    channel_name = row.get("channel_name", "")
 
     # Only process pending rows
     if status.lower() != "pending":
@@ -134,6 +135,8 @@ def create_submission(row):
     }
     if reorder_code:
         data["reorder_code"] = reorder_code
+    if channel_name:
+        data["channel_name"] = channel_name
 
     with open(filepath, "w") as f:
         json.dump(data, f, indent=2)
