@@ -267,7 +267,18 @@ def main():
         print(f"ERROR: Output directory not found: {args.output_dir}")
         sys.exit(1)
 
-    print(f"Building email to {args.to}...")
+    # Last line of defense: refuse to send email with 0 attachments
+    deliverables = [
+        f for f in os.listdir(args.output_dir)
+        if (os.path.isfile(os.path.join(args.output_dir, f))
+            and os.path.getsize(os.path.join(args.output_dir, f)) > 0
+            and not f.startswith("."))
+    ]
+    if not deliverables:
+        print(f"ERROR: Output directory is empty, refusing to send email with 0 attachments: {args.output_dir}")
+        sys.exit(1)
+
+    print(f"Building email to {args.to} ({len(deliverables)} file(s))...")
     msg = build_html_email(args.to, gmail_user, args.niche, args.output_dir, args.reorder_code, args.request_type)
 
     print(f"Sending via smtp.gmail.com as {gmail_user}...")

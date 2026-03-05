@@ -27,10 +27,10 @@ cmd_start() {
         echo "Starting watchdog in foreground (Ctrl+C to stop)..."
         echo $$ > "$PIDFILE"
         trap 'rm -f "$PIDFILE"; echo ""; echo "Watchdog stopped."; exit 0' INT TERM
-        exec "$WATCHDOG"
+        exec env -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT "$WATCHDOG"
     else
         echo "Starting watchdog..."
-        nohup "$WATCHDOG" > /dev/null 2>&1 &
+        env -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT nohup "$WATCHDOG" > /dev/null 2>&1 &
         echo $! > "$PIDFILE"
         echo "Watchdog started (PID $!)"
     fi
