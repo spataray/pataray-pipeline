@@ -9,9 +9,23 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PIDFILE="$SCRIPT_DIR/poc/watchdog.pid"
 LOGFILE="$SCRIPT_DIR/poc/watchdog.log"
 WATCHDOG="$SCRIPT_DIR/poc/watchdog.sh"
+STATUS_API="$SCRIPT_DIR/poc/status-api.py"
+STATUS_PIDFILE="$SCRIPT_DIR/poc/status-api.pid"
 
 is_running() {
     [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
+}
+
+start_status_api() {
+    python3 "$STATUS_API" >> "$SCRIPT_DIR/poc/status-api.log" 2>&1 &
+    echo $! > "$STATUS_PIDFILE"
+}
+
+stop_status_api() {
+    if [ -f "$STATUS_PIDFILE" ]; then
+        kill "$(cat "$STATUS_PIDFILE")" 2>/dev/null || true
+        rm -f "$STATUS_PIDFILE"
+    fi
 }
 
 cmd_start() {
@@ -26,13 +40,17 @@ cmd_start() {
     if [ "$foreground" = true ]; then
         echo "Starting watchdog in foreground (Ctrl+C to stop)..."
         echo $$ > "$PIDFILE"
-        trap 'rm -f "$PIDFILE"; echo ""; echo "Watchdog stopped."; exit 0' INT TERM
+        start_status_api
+        echo "Status API started (port 7373)"
+        trap 'rm -f "$PIDFILE"; stop_status_api; echo ""; echo "Watchdog stopped."; exit 0' INT TERM
         exec env -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT "$WATCHDOG"
     else
         echo "Starting watchdog..."
         env -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT nohup "$WATCHDOG" > /dev/null 2>&1 &
         echo $! > "$PIDFILE"
+        start_status_api
         echo "Watchdog started (PID $!)"
+        echo "Status API started (port 7373)"
     fi
 }
 
@@ -47,6 +65,7 @@ cmd_stop() {
     echo "Stopping watchdog (PID $pid)..."
     kill "$pid"
     rm -f "$PIDFILE"
+    stop_status_api
     echo "Watchdog stopped."
 }
 
