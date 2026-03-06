@@ -262,10 +262,19 @@ Format as a clean, readable report.
                 # Shared HTML styling instructions for all HTML deliverables
                 HTML_STYLE="Write the output as a complete, self-contained HTML file with professional dark theme styling. Use a <style> tag with these CSS rules: body { background:#0f1117; color:#e0e0e0; font-family:Segoe UI,Tahoma,sans-serif; padding:40px; line-height:1.7; margin:0; } h1 { color:#fff; border-bottom:2px solid #6366f1; padding-bottom:12px; } h2 { color:#22d3ee; margin-top:32px; } h3 { color:#67e8f9; } p,li { color:#b0b0c0; } .card { background:#1a1b26; border:1px solid #2a2b3d; border-radius:12px; padding:20px; margin:16px 0; } table { width:100%; border-collapse:collapse; margin:16px 0; } th { background:#1a1b26; color:#fff; padding:12px; text-align:left; border-bottom:2px solid #6366f1; } td { padding:10px 12px; border-bottom:1px solid #2a2b3d; color:#b0b0c0; } a { color:#22d3ee; } .highlight { color:#10b981; font-weight:bold; } Wrap all content in a centered div (max-width:800px; margin:0 auto). End with a footer div: Faceless AI Channel Builder. Make it polished and modern."
 
-                # Step 1/6: Niche Research
+                # Step 1/6: Niche Research (use cache if available)
+                niche_slug=$(echo "$niche" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g; s/--*/-/g; s/^-//; s/-$//')
+                niche_cache="$PROJECT_ROOT/submissions/niche-cache/$niche_slug/01-niche-research.html"
+
                 log "  Step 1/6: Niche Research..."
                 update_status "$order_id" 1 "Researching your niche..."
-                claude --model sonnet -p "
+
+                if [ -f "$niche_cache" ]; then
+                    log "  Step 1/6: Using cached research for '$niche'"
+                    cp "$niche_cache" "$output_dir/01-niche-research.html"
+                else
+                    log "  Step 1/6: No cache found — running live web search..."
+                    claude --model sonnet -p "
 You are the Niche Research Agent. Research the niche \"$niche\" for a faceless YouTube channel.
 
 Provide a comprehensive analysis including:
@@ -284,6 +293,7 @@ $HTML_STYLE
 
 Write the report to: $output_dir/01-niche-research.html
 " --allowedTools "WebSearch,WebFetch,Read,Write" > /dev/null 2>&1 || pipeline_ok=false
+                fi
 
                 if [ "$pipeline_ok" = true ]; then
                     log "  Step 1 DONE"

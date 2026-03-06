@@ -11,6 +11,7 @@ LOGFILE="$SCRIPT_DIR/poc/watchdog.log"
 WATCHDOG="$SCRIPT_DIR/poc/watchdog.sh"
 STATUS_API="$SCRIPT_DIR/poc/status-api.py"
 STATUS_PIDFILE="$SCRIPT_DIR/poc/status-api.pid"
+SEED_CACHE="$SCRIPT_DIR/poc/seed-niche-cache.sh"
 
 is_running() {
     [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
@@ -94,6 +95,10 @@ cmd_logs() {
     tail -f "$LOGFILE"
 }
 
+cmd_cache() {
+    bash "$SEED_CACHE" "${1:-}"
+}
+
 cmd_help() {
     cat <<'EOF'
 Faceless Channel Builder (FCB) Pipeline Manager
@@ -101,18 +106,20 @@ Faceless Channel Builder (FCB) Pipeline Manager
 Usage: ./pipeline <command>
 
 Commands:
-  start       Start the watchdog in the background
-  start -f    Start the watchdog in the foreground
-  stop        Stop the watchdog process
-  restart     Stop and restart the watchdog
-  status      Check if the watchdog is running
-  logs        Tail the watchdog log (live)
+  start              Start the watchdog in the background
+  start -f           Start the watchdog in the foreground
+  stop               Stop the watchdog process
+  restart            Stop and restart the watchdog
+  status             Check if the watchdog is running
+  logs               Tail the watchdog log (live)
+  cache              Seed niche research cache for all 6 niches (saves credits)
+  cache "<niche>"    Refresh cache for one specific niche
 
 Examples:
-  ./pipeline start        # background, survives terminal close
-  ./pipeline start -f     # foreground, see output live
+  ./pipeline start
+  ./pipeline cache                        # run once to seed all niches
+  ./pipeline cache "Legal / True Crime"   # refresh a single niche
   ./pipeline logs
-  ./pipeline restart
 EOF
 }
 
@@ -122,5 +129,6 @@ case "${1:-}" in
     restart) cmd_restart ;;
     status)  cmd_status  ;;
     logs)    cmd_logs    ;;
+    cache)   cmd_cache "${2:-}" ;;
     *)       cmd_help    ;;
 esac
