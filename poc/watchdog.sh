@@ -47,6 +47,10 @@ log() {
 update_status() {
     local oid="$1" step="$2" msg="$3" status="${4:-processing}"
     [ -z "$oid" ] && return 0
+    # Write local status file for the dashboard
+    echo "{\"order_id\":\"$oid\",\"pipeline_step\":$step,\"pipeline_message\":\"$msg\",\"status\":\"$status\"}" \
+        > "$PROJECT_ROOT/submissions/pipeline-status.json"
+    # Post to Google Sheets (async)
     curl -s -L -X POST "$APPS_SCRIPT_URL" \
         -H "Content-Type: application/json" \
         -d "{\"action\":\"update_status\",\"order_id\":\"$oid\",\"pipeline_step\":$step,\"pipeline_message\":\"$msg\",\"status\":\"$status\"}" \

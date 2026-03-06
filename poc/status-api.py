@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from socketserver import ThreadingMixIn
 from pathlib import Path
 
 PORT     = 7373
@@ -24,10 +25,18 @@ SUBS     = FCB_ROOT / "submissions"
 PIDFILE  = FCB_ROOT / "poc" / "watchdog.pid"
 PIPELINE = FCB_ROOT / "pipeline"
 
-STATES = ["processing", "pending", "failed", "completed"]
+STATES        = ["processing", "pending", "failed", "completed"]
+STATUS_FILE   = SUBS / "pipeline-status.json"
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
+
+def load_pipeline_status():
+    """Read the latest pipeline step/message written by watchdog."""
+    try:
+        return json.loads(STATUS_FILE.read_text())
+    except Exception:
+        return {}
 
 def pipeline_state():
     """Return (running: bool, pid: int|None, start_epoch: int|None)."""
@@ -105,9 +114,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type",                  "application/json")
         self.send_header("Content-Length",                str(len(body)))
-        self.send_header("Access-Control-Allow-Origin",   "*")
-        self.send_header("Access-Control-Allow-Methods",  "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers",  "Content-Type")
+        self.send_header("Access-Control-Allow-Origin",          "*")
+        self.send_header("Access-Control-Allow-Methods",         "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers",         "Content-Type")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
         self.end_headers()
         self.wfile.write(body)
 
@@ -119,12 +129,21 @@ class Handler(BaseHTTPRequestHandler):
             self._json(404, {"error": "not found"})
             return
         running, pid, start_time = pipeline_state()
+        ps      = load_pipeline_status()
+        subs    = load_submissions()
+        # Attach live step/message to the matching submission
+        if ps.get("order_id"):
+            for s in subs:
+                if s["order_id"] == ps["order_id"]:
+                    s["pipeline_step"]    = ps.get("pipeline_step", 0)
+                    s["pipeline_message"] = ps.get("pipeline_message", "")
+                    break
         self._json(200, {
             "pipeline_running": running,
             "pid":              pid,
             "start_time":       start_time,
             "now":              int(time.time()),
-            "submissions":      load_submissions(),
+            "submissions":      subs,
         })
 
     def do_POST(self):
@@ -161,8 +180,11 @@ class Handler(BaseHTTPRequestHandler):
             self._json(404, {"error": "not found"})
 
 
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    daemon_threads = True
+
 if __name__ == "__main__":
-    server = HTTPServer(("127.0.0.1", PORT), Handler)
+    server = ThreadedHTTPServer(("127.0.0.1", PORT), Handler)
     print(f"FCB Status API  http://127.0.0.1:{PORT}/status")
     try:
         server.serve_forever()
